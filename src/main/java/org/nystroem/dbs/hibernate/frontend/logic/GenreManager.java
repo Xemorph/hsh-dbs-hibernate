@@ -11,7 +11,7 @@ public class GenreManager {
      * @throws Exception
      */
     public List<String> getGenres() throws Exception {
-        return null;
+        return new GenreFactory().getGenres();
     }
 
 }

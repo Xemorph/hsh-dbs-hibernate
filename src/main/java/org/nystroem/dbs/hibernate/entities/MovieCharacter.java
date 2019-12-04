@@ -39,10 +39,10 @@ public class MovieCharacter {
     private Integer Position = 1;
     // Foreign keys
     @ManyToOne
-    @JoinColumn(name=Person.col_personID, nullable=false)
+    @JoinColumn(name=MovieCharacter.col_persID, nullable=false)
     private Person person;
     @ManyToOne
-    @JoinColumn(name=Movie.col_movieID, nullable=false)
+    @JoinColumn(name=MovieCharacter.col_movID, nullable=false)
     Movie movie;
 
     /** Default Constructor */

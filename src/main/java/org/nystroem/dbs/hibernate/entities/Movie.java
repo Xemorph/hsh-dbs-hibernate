@@ -92,6 +92,14 @@ public class Movie {
         return this.Year;
     }
 
+    public Set<Genre> getGenres() {
+        return this.genres;
+    }
+
+    public Set<MovieCharacter> getMovieCharacters() {
+        return this.movieCharacters;
+    }
+
     public void insert() throws SQLException { }
 
     public void update() throws SQLException { }

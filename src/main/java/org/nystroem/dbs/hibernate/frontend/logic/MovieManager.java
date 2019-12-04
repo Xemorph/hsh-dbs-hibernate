@@ -44,7 +44,7 @@ public class MovieManager {
 
     public MovieDTO getMovie(long movieId) throws Exception {
         // TODO Auto-generated method stub
-        return null;
+        return new MovieFactory().getMovie(movieId);
     }
 
 }
