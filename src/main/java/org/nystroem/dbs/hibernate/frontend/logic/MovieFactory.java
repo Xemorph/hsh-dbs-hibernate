@@ -32,8 +32,11 @@ public class MovieFactory {
         
         // Decision -> Search
         // [BEGIN] #Transaction
+        //Transaktion um auf DB zu sortieren
         tmpEM.getTransaction().begin();
         
+        //Sortquery wird erstellt und in Zeile 51 ausgeführt
+        //Sortquery holt alle Movies aus der DB und sortiert sie nach der MovieId
         QueryBuilder qb = ftem.getSearchFactory()
                 .buildQueryBuilder().forEntity(Movie.class).get();
         org.apache.lucene.search.Query query = qb
@@ -56,8 +59,6 @@ public class MovieFactory {
             movieDTOCopy.setYear(movie.getYear());
             // [Missing] Characters
             // [Missing] Genres
-            // [+](Add) Genres
-            movie.getGenres().stream().forEach(genre -> movieDTOCopy.addGenre(genre.getGenre()));
             rs.add(movieDTOCopy);
         }
         
@@ -73,6 +74,7 @@ public class MovieFactory {
         //Local temporary `javax.persistence.EntityManager`
         EntityManager tmpEM = ((EntityManagerFactory)SharedModules.core().store().handleCachedObject(Mutator.ENTITYMANAGERFACTORY, null)).createEntityManager();
         // [BEGIN] #Transaction
+        //vergessen rauszunehmen
         tmpEM.getTransaction().begin();
 
         Query query = tmpEM.createQuery(
@@ -86,6 +88,7 @@ public class MovieFactory {
         dto.setTitle(rs.getTitle());
         dto.setType(rs.getType().toString());
         dto.setYear(rs.getYear());
+        
         rs.getGenres().stream().map(n -> n.getGenre()).forEach(g -> dto.addGenre(g));
         // Map Set<MovieCharacter> to Set<CharacterDTO>
         for (MovieCharacter mChar : rs.getMovieCharacters()) {

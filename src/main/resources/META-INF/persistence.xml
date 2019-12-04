@@ -10,9 +10,9 @@
             <property name="hibernate.connection.url" 
                 value="jdbc:oracle:thin:@localhost:1521:db01" />
             <property name="hibernate.connection.username" 
-                value="q7e-mha-u1" />
+                value="" />
             <property name="hibernate.connection.password" 
-                value="giD81meF1998" />
+                value="" />
             <property name="hibernate.show_sql" 
                 value="true" />
             <property name="hibernate.hbm2ddl.auto" 

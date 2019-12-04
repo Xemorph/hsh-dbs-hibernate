@@ -35,6 +35,7 @@ import org.hibernate.search.annotations.Store;
 
 @Entity
 @Table(name="Movie")
+//Performance sparen
 @AnalyzerDef(name="titleanalyzer", tokenizer=@org.hibernate.search.annotations.TokenizerDef(factory=StandardTokenizerFactory.class), filters = {
     @org.hibernate.search.annotations.TokenFilterDef(factory=LowerCaseFilterFactory.class),
     @org.hibernate.search.annotations.TokenFilterDef(factory=SnowballPorterFilterFactory.class, params = { @Parameter(name="language", value="English") }) })

@@ -13,3 +13,4 @@ buildNumber.properties
 
 # Luecene files
 org.nystroem*
+**/src/**/*.xml

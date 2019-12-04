@@ -23,6 +23,7 @@ public class GenreFactory {
         List<?> resultset = q.getResultList();
         if (!resultset.isEmpty() && resultset.get(0) instanceof Genre) {
             List<Genre> genres = (List<Genre>) resultset;
+            //reduziere das Genre Objekt auf ein String Objekt; Ergebnis eine Liste aus Strings(Genrename)
             genres.stream().map(n -> n.getGenre()).forEach(rs::add);
         }
         
