@@ -4,7 +4,11 @@ import javax.management.InstanceAlreadyExistsException;
 
 import javax.persistence.EntityManagerFactory;
 
+import org.nystroem.dbs.hibernate.commands.HibernateCommand;
+import org.nystroem.dbs.hibernate.commands.subcommands.HibernateVerticalCommand;
 import org.nystroem.dbs.hibernate.store.Mutator;
+
+import picocli.CommandLine;
 
 /**
  * Hello world!
@@ -12,6 +16,12 @@ import org.nystroem.dbs.hibernate.store.Mutator;
  */
 public class App {
     public static void main(String[] args) {
+        // Argument handling with Picoli
+        CommandLine cmdl = new CommandLine(new HibernateCommand());
+        cmdl.addSubcommand("vert", new HibernateVerticalCommand());
+
+        cmdl.parseWithHandler(new CommandLine.RunLast(), args);
+
         try {
             // Initialization
             SharedModules.initialize();
