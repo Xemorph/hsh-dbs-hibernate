@@ -25,6 +25,7 @@ import org.apache.lucene.analysis.snowball.SnowballPorterFilterFactory;
 import org.apache.lucene.analysis.standard.StandardTokenizerFactory;
 import org.hibernate.search.annotations.Analyzer;
 import org.hibernate.search.annotations.AnalyzerDef;
+import org.hibernate.search.annotations.DocumentId;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Index;
 import org.hibernate.search.annotations.Indexed;
@@ -48,7 +49,7 @@ public class Movie {
     public static final String col_title = "Title";
     public static final String col_year = "Year";
 
-    @Id @Column(name=col_movieID) @GeneratedValue(strategy=GenerationType.SEQUENCE) @SortableField
+    @Id @DocumentId @Column(name=col_movieID) @GeneratedValue(strategy=GenerationType.SEQUENCE) @SortableField
     private Long MovieID;
     @Column(name=col_title, nullable=false)
     @Field(index=Index.YES, store=Store.NO)
