@@ -2,9 +2,11 @@ package org.nystroem.dbs.hibernate.frontend.logic;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Function;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
+import javax.persistence.NoResultException;
 import javax.persistence.Query;
 
 import org.apache.lucene.search.Sort;
@@ -14,8 +16,10 @@ import org.hibernate.search.jpa.FullTextQuery;
 import org.hibernate.search.jpa.Search;
 import org.hibernate.search.query.dsl.QueryBuilder;
 import org.nystroem.dbs.hibernate.SharedModules;
+import org.nystroem.dbs.hibernate.entities.Genre;
 import org.nystroem.dbs.hibernate.entities.Movie;
 import org.nystroem.dbs.hibernate.entities.MovieCharacter;
+import org.nystroem.dbs.hibernate.entities.Person;
 import org.nystroem.dbs.hibernate.frontend.logic.dto.CharacterDTO;
 import org.nystroem.dbs.hibernate.frontend.logic.dto.MovieDTO;
 import org.nystroem.dbs.hibernate.store.Mutator;
@@ -93,6 +97,7 @@ public class MovieFactory {
         // Map Set<MovieCharacter> to Set<CharacterDTO>
         for (MovieCharacter mChar : rs.getMovieCharacters()) {
             CharacterDTO cdto = new CharacterDTO();
+            cdto.setCharId(mChar.getMovCharID());
             cdto.setCharacter(mChar.getCharacter());
             cdto.setAlias(mChar.getAlias());
             cdto.setPlayer(mChar.getPerson().getName());
@@ -107,4 +112,70 @@ public class MovieFactory {
         return dto;
     }
 
+    public void insertUpdateMovie(MovieDTO dto) {
+        Movie mov = new Movie();
+        mov.setTitle(dto.getTitle());
+        mov.setType(dto.getType());
+        mov.setYear(dto.getYear());
+
+
+        //Local temporary `javax.persistence.EntityManager`
+        EntityManager tmpEM = ((EntityManagerFactory)SharedModules.core().store().handleCachedObject(Mutator.ENTITYMANAGERFACTORY, null)).createEntityManager();
+        // [BEGIN] #Transaction
+        //vergessen rauszunehmen
+        tmpEM.getTransaction().begin();
+            
+        dto.getGenres()
+            .stream()
+            .forEach(g -> mov.addGenre(
+                (Genre)tmpEM.createQuery("SELECT g FROM " + Genre.table + " g " + 
+                    "WHERE upper(g." + Genre.col_genre + ") = :name").setParameter("name", g.toUpperCase()).getSingleResult()
+            ));
+
+        // Persist our Movie entity `mov`
+        tmpEM.persist(mov);
+
+        dto.getCharacters()
+            .stream()
+            .forEach(c -> new Function<CharacterDTO,Void>() {
+                    @Override public Void apply(CharacterDTO t) {
+                        MovieCharacter movChar = new MovieCharacter();
+                        Person person = new Person();
+
+                        try {
+                            movChar = (MovieCharacter) tmpEM.createQuery("SELECT c FROM " + MovieCharacter.table + " c " +
+                                                                            "WHERE c." + MovieCharacter.col_movCharID + " = :id")
+                                                            .setParameter("id", t.getCharId())
+                                                            .getSingleResult();
+                        } catch (NoResultException exc) {
+                            movChar.setAlias(t.getAlias());
+                            movChar.setCharacter(t.getCharacter());
+                            try {
+                                person = (Person) tmpEM.createQuery("SELECT p FROM " + Person.table + " p " +
+                                                                            "WHERE upper(p." + Person.col_name + ") = :name")
+                                                        .setParameter("name", t.getPlayer().toUpperCase())
+                                                        .getSingleResult();
+                                
+                                movChar.setPerson(person);
+                            } catch (NoResultException ex) {
+                                person.setName(t.getPlayer());
+                                tmpEM.persist(person);
+                                movChar.setPerson(person);
+                            }
+                        }
+                        movChar.setMovie(mov);
+                        tmpEM.persist(movChar);
+                        return null;
+                    }
+            }.apply(c));
+
+        // [END]
+        tmpEM.getTransaction().commit();
+        //Close local temporary `javax.persistence.EntityManager`
+        tmpEM.close();
+    
+    
+    
+    
+    }
 }

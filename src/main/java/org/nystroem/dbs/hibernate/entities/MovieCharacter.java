@@ -13,8 +13,7 @@ import javax.persistence.Table;
 @Table(name="MovieCharacter")
 public class MovieCharacter {
     /** Konstante */
-    // public static final String seq_movCharID = "movchar_id";
-    // public static final String table = "MovieCharacter";
+    public static final String table = "MovieCharacter";
     public static final String col_char = "Character";
     public static final String col_alias = "Alias";
     public static final String col_movCharID = "MovCharID";
@@ -73,7 +72,15 @@ public class MovieCharacter {
         return this.movie;
     }
 
+    public void setMovie(Movie mov) {
+        this.movie = mov;
+    }
+
     public Person getPerson() {
         return this.person;
+    }
+
+    public void setPerson(Person person) {
+        this.person = person;
     }
 }

@@ -68,8 +68,8 @@ public class Movie {
     })
     @JoinTable(
         name=MovieGenre.table,
-        joinColumns = { @JoinColumn(name=MovieGenre.col_genreID) },
-        inverseJoinColumns = { @JoinColumn(name=MovieGenre.col_movieID) }
+        joinColumns = { @JoinColumn(name=MovieGenre.col_movieID) },
+        inverseJoinColumns = { @JoinColumn(name=MovieGenre.col_genreID) }
     )
     private Set<Genre> genres = new HashSet<Genre>();
 
@@ -106,6 +106,10 @@ public class Movie {
 
     public Set<Genre> getGenres() {
         return this.genres;
+    }
+
+    public void addGenre(Genre genre) {
+        this.genres.add(genre);
     }
 
     public Set<MovieCharacter> getMovieCharacters() {

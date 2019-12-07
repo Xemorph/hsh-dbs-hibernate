@@ -16,18 +16,24 @@ import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
+import org.hibernate.search.annotations.Field;
+import org.hibernate.search.annotations.Index;
+import org.hibernate.search.annotations.Indexed;
+import org.hibernate.search.annotations.Store;
+
 @Entity
 @Table(name="Person")
+@Indexed
 public class Person {
     /** Konstanten */
-    // public static final String seq_personid = "person_id";
-    // private static final String table = "Person";
-    protected static final String col_personID = "PersonID";
-    protected static final String col_name = "Name";
-    protected static final String col_sex = "Sex";
+    public static final String table = "Person";
+    public static final String col_personID = "PersonID";
+    public static final String col_name = "Name";
+    public static final String col_sex = "Sex";
 
     @Id @Column(name=col_personID) @GeneratedValue(strategy=GenerationType.SEQUENCE)
     private Long PersonID;
+    @Field(index=Index.YES, store=Store.NO)
     @Column(name=col_name, nullable=false)
     private String Name;
     @Column(name=col_sex, nullable=false)
@@ -57,5 +63,9 @@ public class Person {
 
     public String getSex() {
         return this.Sex;
+    }
+
+    public Set<MovieCharacter> getMovieCharacters() {
+        return this.plays;
     }
 }

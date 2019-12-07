@@ -1,5 +1,6 @@
 package org.nystroem.dbs.hibernate.frontend.logic;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -14,7 +15,7 @@ import org.nystroem.dbs.hibernate.store.Mutator;
 public class GenreFactory {
 
     public List<String> getGenres() {
-        List<String> rs = new CopyOnWriteArrayList<>();
+        List<String> rs = new ArrayList<>();
         
         //Local temporary `javax.persistence.EntityManager`
         EntityManager tmpEM = ((EntityManagerFactory)SharedModules.core().store().handleCachedObject(Mutator.ENTITYMANAGERFACTORY, null)).createEntityManager();
@@ -24,7 +25,7 @@ public class GenreFactory {
         if (!resultset.isEmpty() && resultset.get(0) instanceof Genre) {
             List<Genre> genres = (List<Genre>) resultset;
             //reduziere das Genre Objekt auf ein String Objekt; Ergebnis eine Liste aus Strings(Genrename)
-            genres.stream().map(n -> n.getGenre()).forEach(rs::add);
+            genres.stream().map(n -> n.getGenre()).forEach(n -> rs.add(n));
         }
         
         //Close local temporary `javax.persistence.EntityManager`

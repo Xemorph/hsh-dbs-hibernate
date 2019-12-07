@@ -29,7 +29,7 @@ public class MovieManager {
      * @throws Exception
      */
     public void insertUpdateMovie(MovieDTO movieDTO) throws Exception {
-        
+        new MovieFactory().insertUpdateMovie(movieDTO);
     }
 
     /**

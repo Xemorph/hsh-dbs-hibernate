@@ -19,10 +19,9 @@ import javax.persistence.Table;
 public class Genre {
 
     /** Konstanten */
-    // public static final String seq_genreID = "genre_id";
-    // private static final String table = "Genre";
-    protected static final String col_genre = "Genre";
-    protected static final String col_genreID = "GenreID";
+    public static final String table = "Genre";
+    public static final String col_genre = "Genre";
+    public static final String col_genreID = "GenreID";
 
     @Id @Column(name=col_genreID) @GeneratedValue(strategy=GenerationType.SEQUENCE)
     private Long GenreID;
@@ -39,11 +38,4 @@ public class Genre {
     public long getGenreID() {
         return this.GenreID;
     }
-
-    public void insert() throws SQLException { /** TODO */ }
-
-    public void update() throws SQLException { /** TODO */ }
-
-    public void delete() throws SQLException { /** TODO */ }
-
 }

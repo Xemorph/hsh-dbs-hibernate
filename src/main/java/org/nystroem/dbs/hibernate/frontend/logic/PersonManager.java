@@ -11,8 +11,7 @@ public class PersonManager {
      * @throws Exception
      */
     public List<String> getPersonList(String text) throws Exception {
-        // TODO
-        return null;
+        return new PersonFactory().getPersonList(text);
     }
 
 }
