@@ -17,11 +17,11 @@ public class CinemaMovie
     protected static final String col_tickets = "TicketsSold";
 
     @Column(name=CinemaMovie.col_tickets)
-    private int TicketsSold;
+    private Integer TicketsSold;
 
     public CinemaMovie() { /** Nothing is here! */}
 
-    public int getTicketsSold() {
+    public Integer getTicketsSold() {
         return this.TicketsSold;
     }
 

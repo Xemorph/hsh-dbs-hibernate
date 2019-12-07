@@ -11,11 +11,8 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
 
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
-import org.apache.lucene.util.Version;
 import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.FullTextQuery;
 import org.hibernate.search.jpa.Search;
@@ -87,14 +84,21 @@ public class MovieFactory {
         // [BEGIN] #Transaction
         //vergessen rauszunehmen
         tmpEM.getTransaction().begin();
+        // Create an empty MovieDTO object
+        MovieDTO dto = new MovieDTO();
 
         Query query = tmpEM.createQuery(
                 "SELECT m FROM " + Movie.table + " m " + 
                 "WHERE m." + Movie.col_movieID + " = :id").setParameter("id", Long.valueOf(id));
         // SingleResultSet -> Movie | No Initialization -> Direct convert
         Movie rs = (Movie) query.getSingleResult();
+        if (rs instanceof CinemaMovie)
+            if (((CinemaMovie)rs).getTicketsSold() != null)
+                dto.setTicketsSold(((CinemaMovie)rs).getTicketsSold());
+        if (rs instanceof Series)
+            if (((Series)rs).getNumOfEpisodes() != null)
+                dto.setNumOfEpisodes(((Series)rs).getNumOfEpisodes());
         // Map Movie to MovieDTO
-        MovieDTO dto = new MovieDTO();
         dto.setId(rs.getMovieID());
         dto.setTitle(rs.getTitle());
         dto.setType(rs.getType().toString());

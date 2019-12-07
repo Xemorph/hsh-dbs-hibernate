@@ -17,9 +17,9 @@ public class Series
     protected static final String col_numsofepisodes = "NumOfEpisodes";
 
     @Column(name=Series.col_numsofepisodes)
-    private int NumOfEpisodes;
+    private Integer NumOfEpisodes;
 
-    public int getNumOfEpisodes() {
+    public Integer getNumOfEpisodes() {
         return this.NumOfEpisodes;
     }
 
