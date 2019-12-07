@@ -4,8 +4,11 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 
+import org.hibernate.search.annotations.Indexed;
+
 @Entity
 @Table(name=Series.table)
+@Indexed
 public class Series 
     extends org.nystroem.dbs.hibernate.entities.Movie 
 {
