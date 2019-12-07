@@ -6,9 +6,9 @@ import javax.persistence.Column;
 
 public class MovieGenre {
     /** Konstanten */
-    protected static final String table = "hasGenre";
-    protected static final String col_genreID = "GenreID";
-    protected static final String col_movieID = "MovieID";
+    public static final String table = "hasGenre";
+    public static final String col_genreID = "GenreID";
+    public static final String col_movieID = "MovieID";
 
     @Column(name=col_genreID, nullable=false)
     public Long genreID;

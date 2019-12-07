@@ -22,12 +22,12 @@ public class MovieCharacter {
     /** Konstante */
     // public static final String seq_movCharID = "movchar_id";
     // public static final String table = "MovieCharacter";
-    protected static final String col_char = "Character";
-    protected static final String col_alias = "Alias";
-    protected static final String col_movCharID = "MovCharID";
-    protected static final String col_pos = "Position";
-    protected static final String col_movID = "hasCharacter";
-    protected static final String col_persID = "plays";
+    public static final String col_char = "Character";
+    public static final String col_alias = "Alias";
+    public static final String col_movCharID = "MovCharID";
+    public static final String col_pos = "Position";
+    public static final String col_movID = "hasCharacter";
+    public static final String col_persID = "plays";
 
     @Id @Column(name=col_movCharID) @GeneratedValue(strategy=GenerationType.SEQUENCE)
     private Long MovCharID;
@@ -43,7 +43,7 @@ public class MovieCharacter {
     private Person person;
     @ManyToOne
     @JoinColumn(name=MovieCharacter.col_movID, nullable=false)
-    Movie movie;
+    private Movie movie;
 
     /** Default Constructor */
     public MovieCharacter() { /** Nothing here!  */ }
