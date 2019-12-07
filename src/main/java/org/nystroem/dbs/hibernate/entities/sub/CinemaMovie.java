@@ -16,4 +16,14 @@ public class CinemaMovie
     @Column(name=CinemaMovie.col_tickets)
     private int TicketsSold;
 
+    public CinemaMovie() { /** Nothing is here! */}
+
+    public int getTicketsSold() {
+        return this.TicketsSold;
+    }
+
+    public void setTicketsSold(int tickets) {
+        this.TicketsSold = tickets;
+    }
+
 }

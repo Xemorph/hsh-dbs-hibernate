@@ -19,6 +19,8 @@ public class MovieDTO {
     private String title = "";
     private String type = "C";
     private int year = 0;
+    private Integer tickets = null;
+    private Integer numofepisodes = null;
     private Set<String> genres = new HashSet<String>();
     private List<CharacterDTO> characters = new ArrayList<CharacterDTO>();
     
@@ -45,6 +47,22 @@ public class MovieDTO {
     }
     public void setYear(int year) {
         this.year = year;
+    }
+
+    public Integer getTicketsSold() {
+        return tickets;
+    }
+
+    public void setTicketsSold(Integer tickets) {
+        this.tickets = tickets;
+    }
+
+    public Integer getNumOfEpisodes() {
+        return numofepisodes;
+    }
+
+    public void setNumOfEpisodes(Integer num) {
+        this.numofepisodes = num;
     }
     
     public void addGenre(String genre) {

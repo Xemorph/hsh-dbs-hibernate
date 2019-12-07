@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
@@ -20,7 +21,10 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
+import javax.swing.text.PlainDocument;
 
+import org.nystroem.dbs.hibernate.frontend.gui.components.JRadioButtonPanel;
+import org.nystroem.dbs.hibernate.frontend.gui.filters.OnlyIntegerFilter;
 import org.nystroem.dbs.hibernate.frontend.logic.dto.CharacterDTO;
 import org.nystroem.dbs.hibernate.frontend.logic.dto.MovieDTO;
 
@@ -38,6 +42,14 @@ public class MovieDialog extends JDialog {
 
     private JLabel labType;
     private JTextField txtType;
+
+    // Custom added
+    // [BEGIN]
+    private JLabel labCategory;
+    private JRadioButtonPanel rdBtnPnlCinema;
+    private JRadioButtonPanel rdBtnPnlSeries;
+    private ButtonGroup rdBtnChoice;
+    // [END]
 
     private JLabel labGenre;
     private JList<String> lstGenre;
@@ -113,6 +125,9 @@ public class MovieDialog extends JDialog {
         layout.setConstraints(txtYear, gbc);
         add(txtYear);
 
+        PlainDocument doc = (PlainDocument) txtYear.getDocument();
+        doc.setDocumentFilter(new OnlyIntegerFilter());
+
         gbc.gridx = 0;
         gbc.gridy = 3;
         labType = new JLabel("Type:");
@@ -125,15 +140,56 @@ public class MovieDialog extends JDialog {
         layout.setConstraints(txtType, gbc);
         add(txtType);
 
+        // Custom added
+        // [BEGIN]
+        rdBtnChoice = new ButtonGroup();
+
         gbc.gridx = 0;
         gbc.gridy = 4;
+        labCategory = new JLabel("Category:");
+        layout.setConstraints(labCategory, gbc);
+        add(labCategory);
+
+        //DocumentFilter - custom one
+        OnlyIntegerFilter filter = new OnlyIntegerFilter();
+
+        gbc.gridx = 1;
+        gbc.gridy = 4;
+        rdBtnPnlCinema = new JRadioButtonPanel("CinemaMovie", filter);
+        layout.setConstraints(rdBtnPnlCinema, gbc);
+        add(rdBtnPnlCinema);
+
+        gbc.gridx = 1;
+        gbc.gridy = 5;
+        rdBtnPnlSeries = new JRadioButtonPanel("Series", filter);
+        layout.setConstraints(rdBtnPnlSeries, gbc);
+        add(rdBtnPnlSeries);
+
+        //gbc.gridx = 1;
+        //gbc.gridy = 4;
+        //txtTickets = new JTextField(1);
+        //layout.setConstraints(txtTickets, gbc);
+        //add(txtTickets);
+
+        //gbc.gridx = 1;
+        //gbc.gridy = 5;
+        //txtNumOfEpisodes = new JTextField(1);
+        //layout.setConstraints(txtNumOfEpisodes, gbc);
+        //add(txtNumOfEpisodes);
+        
+        rdBtnChoice.add(rdBtnPnlCinema.getRadioButton());
+        rdBtnChoice.add(rdBtnPnlSeries.getRadioButton());
+        // [END]
+
+        gbc.gridx = 0;
+        gbc.gridy = 6;
         labGenre = new JLabel("Genres:");
         layout.setConstraints(labGenre, gbc);
         add(labGenre);
 
         gbc.gridx = 1;
-        gbc.gridy = 4;
-        gbc.gridheight = 4;
+        gbc.gridy = 6;
+        gbc.gridheight = 2;
         lstGenre = new JList<String>();
         scrGenre = new JScrollPane(lstGenre);
         layout.setConstraints(scrGenre, gbc);
@@ -264,6 +320,13 @@ public class MovieDialog extends JDialog {
         txtYear.setText("" + movie.getYear());
         txtType.setText(("" + movie.getType()).trim());
 
+        if (movie.getTicketsSold() != null || movie.getNumOfEpisodes() != null) {
+            if (movie.getTicketsSold() != null)
+                rdBtnPnlCinema.setInputValue(Integer.valueOf(movie.getTicketsSold()));
+            if (movie.getNumOfEpisodes() != null)
+                rdBtnPnlSeries.setInputValue(Integer.valueOf(movie.getNumOfEpisodes()));
+        }
+
         int [] indices = new int[movie.getGenres().size()];
         int j = 0;
         for (String genre : movie.getGenres()) {
@@ -289,6 +352,11 @@ public class MovieDialog extends JDialog {
         movie.setTitle(txtTitle.getText());
         movie.setYear(Integer.parseInt(txtYear.getText()));
         movie.setType(txtType.getText());
+
+        if (rdBtnPnlCinema.getInputValue() != null)
+            movie.setTicketsSold(Integer.parseInt(rdBtnPnlCinema.getInputValue()));
+        if (rdBtnPnlSeries.getInputValue() != null)
+            movie.setNumOfEpisodes(Integer.parseInt(rdBtnPnlSeries.getInputValue()));
 
         // In der Liste selektiere Genres in die Liste im Movie uebernehmen
         Set<String> genres = new HashSet<String>();

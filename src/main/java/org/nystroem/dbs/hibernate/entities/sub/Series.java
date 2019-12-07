@@ -16,4 +16,12 @@ public class Series
     @Column(name=Series.col_numsofepisodes)
     private int NumOfEpisodes;
 
+    public int getNumOfEpisodes() {
+        return this.NumOfEpisodes;
+    }
+
+    public void setNumOfEpisodes(int num) {
+        this.NumOfEpisodes = num;
+    }
+
 }

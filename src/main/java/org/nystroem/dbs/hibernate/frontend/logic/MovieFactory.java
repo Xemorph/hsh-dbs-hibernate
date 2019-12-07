@@ -1,6 +1,8 @@
 package org.nystroem.dbs.hibernate.frontend.logic;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 
@@ -9,8 +11,11 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
 
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
+import org.apache.lucene.util.Version;
 import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.FullTextQuery;
 import org.hibernate.search.jpa.Search;
@@ -20,6 +25,8 @@ import org.nystroem.dbs.hibernate.entities.Genre;
 import org.nystroem.dbs.hibernate.entities.Movie;
 import org.nystroem.dbs.hibernate.entities.MovieCharacter;
 import org.nystroem.dbs.hibernate.entities.Person;
+import org.nystroem.dbs.hibernate.entities.sub.CinemaMovie;
+import org.nystroem.dbs.hibernate.entities.sub.Series;
 import org.nystroem.dbs.hibernate.frontend.logic.dto.CharacterDTO;
 import org.nystroem.dbs.hibernate.frontend.logic.dto.MovieDTO;
 import org.nystroem.dbs.hibernate.store.Mutator;
@@ -114,20 +121,33 @@ public class MovieFactory {
 
     public void insertUpdateMovie(MovieDTO dto) {
         Movie mov = new Movie();
+        if (dto.getTicketsSold() != null)
+            mov = new CinemaMovie();
+        if (dto.getNumOfEpisodes() != null)
+            mov = new Series();
         mov.setTitle(dto.getTitle());
         mov.setType(dto.getType());
         mov.setYear(dto.getYear());
 
+        if (mov instanceof CinemaMovie) {
+            System.out.println("[Debug] Tickets: " + dto.getTicketsSold());
+            ((CinemaMovie)mov).setTicketsSold(dto.getTicketsSold());
+        }
+        if (mov instanceof Series) {
+            System.out.println("[Debug] Episodes: " + dto.getNumOfEpisodes());
+            ((Series)mov).setNumOfEpisodes(dto.getNumOfEpisodes());
+        }
 
         //Local temporary `javax.persistence.EntityManager`
         EntityManager tmpEM = ((EntityManagerFactory)SharedModules.core().store().handleCachedObject(Mutator.ENTITYMANAGERFACTORY, null)).createEntityManager();
         // [BEGIN] #Transaction
         //vergessen rauszunehmen
         tmpEM.getTransaction().begin();
-            
+        
+        final Set<Genre> genres = new HashSet<>();
         dto.getGenres()
             .stream()
-            .forEach(g -> mov.addGenre(
+            .forEach(g -> genres.add(
                 (Genre)tmpEM.createQuery("SELECT g FROM " + Genre.table + " g " + 
                     "WHERE upper(g." + Genre.col_genre + ") = :name").setParameter("name", g.toUpperCase()).getSingleResult()
             ));
@@ -135,6 +155,7 @@ public class MovieFactory {
         // Persist our Movie entity `mov`
         tmpEM.persist(mov);
 
+        final Set<MovieCharacter> movChars = new HashSet<>();
         dto.getCharacters()
             .stream()
             .forEach(c -> new Function<CharacterDTO,Void>() {
@@ -163,12 +184,16 @@ public class MovieFactory {
                                 movChar.setPerson(person);
                             }
                         }
-                        movChar.setMovie(mov);
-                        tmpEM.persist(movChar);
+                        movChars.add(movChar);
                         return null;
                     }
             }.apply(c));
 
+        // Persist MovieCharacter
+        for (MovieCharacter movChar : movChars) {
+            movChar.setMovie(mov);
+            tmpEM.persist(movChar);
+        }
         // [END]
         tmpEM.getTransaction().commit();
         //Close local temporary `javax.persistence.EntityManager`
