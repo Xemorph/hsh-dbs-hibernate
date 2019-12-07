@@ -1,18 +1,11 @@
 package org.nystroem.dbs.hibernate.entities;
 
-import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
-
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
@@ -56,12 +49,24 @@ public class MovieCharacter {
         return this.Character;
     }
 
+    public void setCharacter(String character) {
+        this.Character = character;
+    }
+
     public String getAlias() {
         return this.Alias;
     }
 
+    public void setAlias(String alias) {
+        this.Alias = alias;
+    }
+
     public int getPosition() {
         return this.Position;
+    }
+
+    public void setPosition(int pos) {
+        this.Position = pos;
     }
 
     public Movie getMovie() {
@@ -71,11 +76,4 @@ public class MovieCharacter {
     public Person getPerson() {
         return this.person;
     }
-
-
-    public void insert() throws SQLException { }
-
-    public void update() throws SQLException { }
-
-    public void delete() throws SQLException { }
 }

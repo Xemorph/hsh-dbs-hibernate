@@ -5,7 +5,6 @@
  *--------------------------------------------------------------------------------------------*/
 package org.nystroem.dbs.hibernate.entities;
 
-import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -15,8 +14,6 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.Inheritance;
-import javax.persistence.InheritanceType;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
@@ -87,12 +84,24 @@ public class Movie {
         return this.Title;
     }
 
+    public void setTitle(String title) {
+        this.Title = title;
+    }
+
     public String getType() {
         return this.Type;
     }
 
+    public void setType(String type) {
+        this.Type = type;
+    }
+
     public int getYear() {
         return this.Year;
+    }
+
+    public void setYear(int year) {
+        this.Year = year;
     }
 
     public Set<Genre> getGenres() {
@@ -102,14 +111,4 @@ public class Movie {
     public Set<MovieCharacter> getMovieCharacters() {
         return this.movieCharacters;
     }
-
-    public void insert() throws SQLException { }
-
-    public void update() throws SQLException { }
-
-    public void delete() throws SQLException { }
-
-    /* Stored Procedure Executor */
-    public void executeUpdateLastChangeTime(long movieID) throws Exception { }
-
 }

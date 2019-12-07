@@ -5,7 +5,6 @@
  *--------------------------------------------------------------------------------------------*/
 package org.nystroem.dbs.hibernate.entities;
 
-import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -48,14 +47,15 @@ public class Person {
         return this.Name;
     }
 
+    public void setName(String name) {
+        this.Name = name;
+    }
+
+    public void setSex(String sex) {
+        this.Sex = sex;
+    }
+
     public String getSex() {
         return this.Sex;
     }
-
-    public void insert() throws SQLException { }
-
-    public void update() throws SQLException { }
-
-    public void delete() throws SQLException { }
-
 }
