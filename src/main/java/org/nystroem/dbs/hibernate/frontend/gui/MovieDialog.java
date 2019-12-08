@@ -321,10 +321,14 @@ public class MovieDialog extends JDialog {
         txtType.setText(("" + movie.getType()).trim());
 
         if (movie.getTicketsSold() != null || movie.getNumOfEpisodes() != null) {
-            if (movie.getTicketsSold() != null)
+            if (movie.getTicketsSold() != null) {
                 rdBtnPnlCinema.setInputValue(Integer.valueOf(movie.getTicketsSold()));
-            if (movie.getNumOfEpisodes() != null)
+                rdBtnPnlCinema.getRadioButton().setSelected(true);
+            }
+            if (movie.getNumOfEpisodes() != null) {
                 rdBtnPnlSeries.setInputValue(Integer.valueOf(movie.getNumOfEpisodes()));
+                rdBtnPnlSeries.getRadioButton().setSelected(true);
+            }
         }
 
         int [] indices = new int[movie.getGenres().size()];
