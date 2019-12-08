@@ -2,6 +2,7 @@ package org.nystroem.dbs.hibernate.frontend.logic;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringJoiner;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -34,14 +35,21 @@ public class PersonFactory {
         org.apache.lucene.search.Query query = qb
               .keyword()
               .wildcard()
-              .onFields(Person.col_name)
-              .matching("*"+text+"*")
+              .onField(Person.col_name)
+              .matching(text.toLowerCase()+"*")
               .createQuery();
         // wrap Lucene query in a javax.persistence.Query
         FullTextQuery persistenceQuery = ftem.createFullTextQuery(query, Person.class);
+
+        // Debugging
+        StringJoiner joiner = new StringJoiner(",");
+        for (Person pers : (List<Person>)persistenceQuery.getResultList()) {
+            joiner.add(pers.getName());
+        }
+        System.out.println("[Debug] Person list: " + joiner.toString());
+
         // execute search
         List<String> persons = new ArrayList<>();
-
         ((List<Person>)persistenceQuery.getResultList()).stream().map(p -> p.getName()).forEach(n -> persons.add(n));
 
         return persons;

@@ -50,8 +50,8 @@ public class MovieFactory {
         org.apache.lucene.search.Query query = qb
               .keyword()
               .wildcard()
-              .onFields(Movie.col_title)
-              .matching("*"+search+"*")
+              .onField(Movie.col_title)
+              .matching(search.toLowerCase()+"*")
               .createQuery();
         org.apache.lucene.search.Sort sort = new Sort(SortField.FIELD_DOC, new SortField(Movie.col_movieID, SortField.Type.STRING, false)); // Descending order
         // wrap Lucene query in a javax.persistence.Query

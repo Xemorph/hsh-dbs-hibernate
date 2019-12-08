@@ -47,7 +47,7 @@ public class Person {
     @GeneratedValue(strategy=GenerationType.SEQUENCE, generator=Person.seq_personID)
     @SequenceGenerator(name=Person.seq_personID, sequenceName=Person.seq_personID, allocationSize=1, initialValue=1)
     private Long PersonID;
-    @Column(name=col_name, nullable=false)
+    @Column(name=col_name, nullable=false, unique=true)
     @Field(index=Index.YES, store=Store.YES)
     @Analyzer(definition="nameanalyzer")
     private String Name;
