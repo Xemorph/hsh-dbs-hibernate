@@ -18,6 +18,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import org.apache.lucene.analysis.core.LowerCaseFilterFactory;
@@ -42,14 +43,18 @@ import org.hibernate.search.annotations.Store;
 @Indexed
 public class Movie {
     /** Konstanten */
-    // public static final String seq_movieID = "movie_id";
+    public static final String seq_movieID = "movie_id";
     public static final String table = "Movie";
     public static final String col_movieID = "MovieID";
     public static final String col_type = "Type";
     public static final String col_title = "Title";
     public static final String col_year = "Year";
 
-    @Id @DocumentId @Column(name=col_movieID) @GeneratedValue(strategy=GenerationType.SEQUENCE) @SortableField
+    @Id
+    @Column(name=col_movieID)
+    @GeneratedValue(strategy=GenerationType.SEQUENCE, generator=Movie.seq_movieID)
+    @SequenceGenerator(name=Movie.seq_movieID, sequenceName=Movie.seq_movieID, allocationSize=1, initialValue=1)
+    @SortableField
     private Long MovieID;
     @Column(name=col_title, nullable=false)
     @Field(index=Index.YES, store=Store.NO)

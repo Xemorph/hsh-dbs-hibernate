@@ -2,7 +2,6 @@ package org.nystroem.dbs.hibernate.frontend.logic;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -42,7 +41,9 @@ public class PersonFactory {
         FullTextQuery persistenceQuery = ftem.createFullTextQuery(query, Person.class);
         // execute search
         List<String> persons = new ArrayList<>();
-        persistenceQuery.getResultList().stream().map(p -> ((Person)p).getName()).forEach(n -> persons.add(String.valueOf(n)));
+
+        ((List<Person>)persistenceQuery.getResultList()).stream().map(p -> p.getName()).forEach(n -> persons.add(n));
+
         return persons;
     }
 
