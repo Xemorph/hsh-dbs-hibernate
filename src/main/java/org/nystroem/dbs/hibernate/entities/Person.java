@@ -13,6 +13,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -53,9 +54,8 @@ public class Person {
     private String Name;
     @Column(name=col_sex, nullable=false)
     private String Sex = "M";
-
     @OneToMany(mappedBy="person")
-    Set<MovieCharacter> plays = new HashSet<MovieCharacter>();
+    private Set<MovieCharacter> plays = new HashSet<>();
 
     /** Default Constructor */
     public Person() { /** Nothing here! */ }

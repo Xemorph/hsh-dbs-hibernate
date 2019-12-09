@@ -1,7 +1,9 @@
 package org.nystroem.dbs.hibernate.entities;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -35,10 +37,10 @@ public class MovieCharacter {
     @Column(name=col_pos, nullable=false)
     private Integer Position = 1;
     // Foreign keys
-    @ManyToOne
+    @ManyToOne(fetch=FetchType.LAZY)
     @JoinColumn(name=MovieCharacter.col_persID, nullable=false)
     private Person person;
-    @ManyToOne
+    @ManyToOne(fetch=FetchType.LAZY)
     @JoinColumn(name=MovieCharacter.col_movID, nullable=false)
     private Movie movie;
 
@@ -47,6 +49,10 @@ public class MovieCharacter {
 
     public long getMovCharID() {
         return this.MovCharID;
+    }
+
+    public void setMovCharID(Long MovCharID) {
+        this.MovCharID = MovCharID;
     }
 
     public String getCharacter() {
@@ -79,6 +85,9 @@ public class MovieCharacter {
 
     public void setMovie(Movie mov) {
         this.movie = mov;
+        // [Warning] This may cause performance issues if you have a large data set since this operation is O(n)
+        if (!mov.getMovieCharacters().contains(this))
+            mov.getMovieCharacters().add(this);
     }
 
     public Person getPerson() {

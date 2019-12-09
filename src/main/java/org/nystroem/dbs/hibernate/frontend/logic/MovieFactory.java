@@ -5,8 +5,10 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -140,36 +142,35 @@ public class MovieFactory {
 
         // Generate temporary `Movie` object from the given `MovieDTO` object
         final Movie dto_snapshot;
-        if (dto.getTicketsSold() != null)
+        if (dto.getTicketsSold() != null) {
             dto_snapshot = new CinemaMovie();
-        else if (dto.getNumOfEpisodes() != null)
+            ((CinemaMovie)dto_snapshot).setTicketsSold(dto.getTicketsSold());
+        }
+        else if (dto.getNumOfEpisodes() != null) {
             dto_snapshot = new Series();
+            ((Series)dto_snapshot).setNumOfEpisodes(dto.getNumOfEpisodes());
+        }
         else
             dto_snapshot = new Movie();
         // Set default variables
         dto_snapshot.setTitle(dto.getTitle());
         dto_snapshot.setType(dto.getType());
         dto_snapshot.setYear(dto.getYear());
-        // Set inheritanced variables if only needed
-        if (dto_snapshot instanceof CinemaMovie)
-            ((CinemaMovie)dto_snapshot).setTicketsSold(dto.getTicketsSold());
-        if (dto_snapshot instanceof Series)
-            ((Series)dto_snapshot).setNumOfEpisodes(dto.getNumOfEpisodes());
         // Get `Genre` object and add it to the `dto_snapshot` via `Movie.addGenre(Genre genre)`
-        dto.getGenres().stream().forEach(n -> new Function<String,Void>() {
-            // Internal method, which gets executed like this `n -> apply(n)` and returns `void` type
-            @Override public Void apply(String t) {
+        dto.getGenres().stream().forEach(n -> {
+                LOGGER.info("Genre " + n);
                 TypedQuery<Genre> q = em.createQuery("SELECT g FROM " + Genre.table + " g " + 
                                                         "WHERE upper(g." + Genre.col_genre + ") = :name", Genre.class);
-                                  q.setParameter("name", t.toUpperCase());
-                dto_snapshot.addGenre(q.getSingleResult());
+                                  q.setParameter("name", n.toUpperCase());
+                if (dto_snapshot != null)
+                    dto_snapshot.addGenre(q.getSingleResult());
+                else
+                    LOGGER.info("dto_snapshot is null");
                 // Return `Void`, it says `null` but it is a `void` type
-                return null;
-            }
-        }.apply(n));
+            });
 
         // Check for Merge / persist
-        if (dto.getId() != null || dto.getId() > 0) {
+        if (dto.getId() != null && dto.getId() > 0) {
             // Result => Merge
             Movie db_snapshot = em.find(Movie.class, Long.valueOf(dto.getId()));
             if (db_snapshot != null)
@@ -185,10 +186,126 @@ public class MovieFactory {
             }
             // Merge `db_snapshot` with `dto_snapshot` to get the updated `Movie` object
             Movie movie = (Movie) em.merge(dto_snapshot);
+            // Get `MovieCharacter` object and add it to the `dto_snapshot`
+            // Set<CharacterDTO> add = dto.getCharacters().stream().filter(x -> x.getCharId() == -999L).collect(Collectors.toSet());
+            // Set<CharacterDTO> update = dto.getCharacters().stream().filter(x -> x.getCharId() != -999L).collect(Collectors.toSet());
+            // // First unlink `MovieCharacters` which got deleted over the GUI
+            // StringJoiner db_joiner = new StringJoiner(",");
+            // StringJoiner dto_joiner = new StringJoiner(",");
+            // Set<Long> remove = new HashSet<>();
+            // if (movie != null)
+            //     remove = new HashSet<>(db_snapshot.getMovieCharacters().stream().map(n -> Long.valueOf(n.getMovCharID())).collect(Collectors.toSet()));
+            // else
+            //     LOGGER.debug("No changes at Movie found!");
+            // // [DEBUGGING]
+            // remove.stream().forEach(x -> { db_joiner.add(String.valueOf(x)); });
+            // update.stream().map(x -> x.getCharId()).forEach(x -> { dto_joiner.add(String.valueOf(x)); });
+            // LOGGER.info("DB - Remove: " + db_joiner.toString());
+            // LOGGER.info("DTO - Remove: " + dto_joiner.toString());
+            // remove.removeAll(update.stream().map(x -> x.getCharId()).collect(Collectors.toSet()));
+            // // Remove `MovieCharacters` only if the list is not empty!
+            // if (!remove.isEmpty())
+            //     remove.stream().forEach(x -> deleteById(MovieCharacter.class, x, em));
+            // // Update `MovieCharacter` objects
+            // update.stream().forEach(cdto -> new Function<CharacterDTO,Void>() {
+            //     @Override public Void apply(CharacterDTO cdto) {
+            //         MovieCharacter db_snapshot = em.find(MovieCharacter.class, Long.valueOf(cdto.getCharId()));
+            //         MovieCharacter dto_snapshot = new MovieCharacter();
+            //         // Normally this shouldn't happens
+            //         if (db_snapshot == null) return null;
+            //         dto_snapshot.setMovCharID(db_snapshot.getMovCharID());
+            //         // Add values of `CharacterDTO` to `dto_snapshot`
+            //         // Hibernate decides himself which fields need an update
+            //         dto_snapshot.setCharacter(cdto.getCharacter());
+            //         dto_snapshot.setAlias(cdto.getAlias());
+            //         // Check if `Player` exists in the database
+            //         TypedQuery<Person> q = em.createQuery("SELECT p FROM " + Person.table + " p " +
+            //                                                 "WHERE upper(p." + Person.col_name + ") = :name", Person.class);
+            //                         q.setParameter("name", cdto.getPlayer().toUpperCase());
+            //         Person person = null;
+            //         try {
+            //             person = q.getSingleResult();
+            //         } catch (Exception exc) { /** No PMD */}
+            //         if (person == null) {
+            //             person = new Person();
+            //             person.setName(cdto.getPlayer());
+            //             // Persist the new created `Person` object
+            //             em.persist(person);
+            //         }
+            //         dto_snapshot.setPerson(person);
+            //         dto_snapshot.setMovie(movie);
+            //         // Merge `db_snapshot` with `dto_snapshot` to get the updated `MovieCharacter` object
+            //         MovieCharacter movChar = (MovieCharacter) em.merge(dto_snapshot);
+            //         // Return `Void`, it says `null` but it is a `void` type
+            //         return null;
+            //     }
+            // }.apply(cdto));
+            // // Add `MovieCharacter` objects
+            // add.stream().forEach(cdto -> new Function<CharacterDTO,Void>() {
+            //     @Override public Void apply(CharacterDTO cdto) {
+            //         MovieCharacter movChar = new MovieCharacter();
+            //         // Add values of `CharacterDTO` to `dto_snapshot`
+            //         movChar.setCharacter(cdto.getCharacter());
+            //         movChar.setAlias(cdto.getAlias());
+            //         // Check if `Player` exists in the database
+            //         TypedQuery<Person> q = em.createQuery("SELECT p FROM " + Person.table + " p " +
+            //                                                 "WHERE upper(p." + Person.col_name + ") = :name", Person.class);
+            //                         q.setParameter("name", cdto.getPlayer().toUpperCase());
+            //         Person person = null;
+            //         try {
+            //             person = q.getSingleResult();
+            //         } catch (Exception exc) { /** No PMD */}
+            //         if (person == null) {
+            //             person = new Person();
+            //             person.setName(cdto.getPlayer());
+            //             // Persist the new created `Person` object
+            //             em.persist(person);
+            //         }
+            //         movChar.setPerson(person);
+            //         movChar.setMovie(movie);
+            //         // Persist the new created `MovieCharacter` object
+            //         em.persist(movChar);
+            //         // Return `Void`, it says `null` but it is a `void` type
+            //         return null;
+            //     }
+            // }.apply(cdto));
         } else {
+            // Get `MovieCharacter` object and add it to the `dto_snapshot`
+            // Add `MovieCharacter` objects
+            // dto.getCharacters().stream().forEach(cdto -> new Function<CharacterDTO,Void>() {
+            //     @Override public Void apply(CharacterDTO cdto) {
+            //         MovieCharacter movChar = new MovieCharacter();
+            //         // Add values of `CharacterDTO` to `dto_snapshot`
+            //         movChar.setCharacter(cdto.getCharacter());
+            //         movChar.setAlias(cdto.getAlias());
+            //         // Check if `Player` exists in the database
+            //         TypedQuery<Person> q = em.createQuery("SELECT p FROM " + Person.table + " p " +
+            //                                                 "WHERE upper(p." + Person.col_name + ") = :name", Person.class);
+            //                         q.setParameter("name", cdto.getPlayer().toUpperCase());
+            //         Person person = null;
+            //         try {
+            //             person = q.getSingleResult();
+            //         } catch (Exception exc) { /** No PMD */}
+            //         if (person == null) {
+            //             person = new Person();
+            //             person.setName(cdto.getPlayer());
+            //             // Persist the new created `Person` object
+            //             em.persist(person);
+            //         }
+            //         movChar.setPerson(person);
+            //         dto_snapshot.addMovieCharacter(movChar);
+            //         // Return `Void`, it says `null` but it is a `void` type
+            //         return null;
+            //     }
+            // }.apply(cdto));
+            LOGGER.info("Persisting Movie...");
             // Result => Persist
             em.persist(dto_snapshot);
         }
+        // [END]
+        em.getTransaction().commit();
+        //Close local temporary `javax.persistence.EntityManager`
+        em.close();
 
         // Persist our Movie entity `mov`
         // em.persist(mov);
@@ -232,11 +349,6 @@ public class MovieFactory {
         //     movChar.setMovie(mov);
         //     em.persist(movChar);
         // }
-
-        // [END]
-        em.getTransaction().commit();
-        //Close local temporary `javax.persistence.EntityManager`
-        em.close();
     }
 
     public void deleteMovie(long movieId) {

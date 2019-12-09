@@ -357,10 +357,13 @@ public class MovieDialog extends JDialog {
         movie.setYear(Integer.parseInt(txtYear.getText()));
         movie.setType(txtType.getText());
 
-        if (rdBtnPnlCinema.getInputValue() != null)
+        if (rdBtnPnlCinema.getInputValue() != null && !rdBtnPnlCinema.getInputValue().isEmpty())
             movie.setTicketsSold(Integer.parseInt(rdBtnPnlCinema.getInputValue()));
-        if (rdBtnPnlSeries.getInputValue() != null)
+        if (rdBtnPnlSeries.getInputValue() != null && !rdBtnPnlSeries.getInputValue().isEmpty())
             movie.setNumOfEpisodes(Integer.parseInt(rdBtnPnlSeries.getInputValue()));
+
+        System.out.println("[Debug] TicketsSold: " + rdBtnPnlCinema.getInputValue());
+        System.out.println("[Debug] NumsOfEpisode: " + rdBtnPnlSeries.getInputValue());
 
         // In der Liste selektiere Genres in die Liste im Movie uebernehmen
         Set<String> genres = new HashSet<String>();

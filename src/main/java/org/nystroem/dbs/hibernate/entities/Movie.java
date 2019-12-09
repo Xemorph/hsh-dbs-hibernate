@@ -41,7 +41,9 @@ import org.hibernate.search.annotations.Store;
     @org.hibernate.search.annotations.TokenFilterDef(factory=LowerCaseFilterFactory.class),
     @org.hibernate.search.annotations.TokenFilterDef(factory=SnowballPorterFilterFactory.class, params = { @Parameter(name="language", value="English") }) })
 @Indexed
-public class Movie {
+public class Movie
+    implements Cloneable
+{
     /** Konstanten */
     public static final String seq_movieID = "movie_id";
     public static final String table = "Movie";
@@ -66,16 +68,16 @@ public class Movie {
     private Integer Year;
 
     @OneToMany(mappedBy="movie", orphanRemoval=true)
-    private Set<MovieCharacter> movieCharacters = new HashSet<MovieCharacter>();
+    private Set<MovieCharacter> movieCharacters = new HashSet<>();
 
-    @ManyToMany(cascade = { 
+    @ManyToMany(cascade={
         CascadeType.PERSIST,
         CascadeType.MERGE
     })
     @JoinTable(
         name=MovieGenre.table,
-        joinColumns = { @JoinColumn(name=MovieGenre.col_movieID) },
-        inverseJoinColumns = { @JoinColumn(name=MovieGenre.col_genreID) }
+        joinColumns={@JoinColumn(name=MovieGenre.col_movieID)},
+        inverseJoinColumns={@JoinColumn(name=MovieGenre.col_genreID)}
     )
     private Set<Genre> genres = new HashSet<Genre>();
 
@@ -124,5 +126,20 @@ public class Movie {
 
     public Set<MovieCharacter> getMovieCharacters() {
         return this.movieCharacters;
+    }
+
+    public void addMovieCharacter(MovieCharacter movieCharacter) {
+        this.movieCharacters.add(movieCharacter);
+        if (movieCharacter.getMovie() != this)
+            movieCharacter.setMovie(this);
+    }
+
+    @Override public Object clone() {
+        try {
+            Movie m = (Movie) super.clone();
+            return m;
+        } catch (CloneNotSupportedException e) {
+            throw new InternalError();
+        }
     }
 }
