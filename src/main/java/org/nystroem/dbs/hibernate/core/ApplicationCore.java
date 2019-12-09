@@ -7,7 +7,6 @@ package org.nystroem.dbs.hibernate.core;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InvalidObjectException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -24,23 +23,17 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 import javax.swing.SwingUtilities;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 
 import org.hibernate.cache.CacheException;
-import org.hibernate.cfg.Configuration;
 import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.Search;
 import org.nystroem.dbs.hibernate.frontend.gui.SearchMovieDialog;
 import org.nystroem.dbs.hibernate.frontend.gui.SearchMovieDialogCallback;
 import org.nystroem.dbs.hibernate.store.Mutator;
 import org.nystroem.dbs.hibernate.store.Store;
-import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
 
 public class ApplicationCore {
     /**

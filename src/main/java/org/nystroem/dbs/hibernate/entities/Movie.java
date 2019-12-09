@@ -32,7 +32,6 @@ import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Parameter;
 import org.hibernate.search.annotations.SortableField;
 import org.hibernate.search.annotations.Store;
-import org.nystroem.dbs.hibernate.frontend.logic.dto.MovieDTO;
 
 @Entity
 @Table(name="Movie")

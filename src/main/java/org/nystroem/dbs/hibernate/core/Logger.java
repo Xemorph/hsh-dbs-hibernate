@@ -213,7 +213,7 @@ public class Logger {
      *
      * @param cls  the class whose name should be associated with the object
      */
-    public Logger (Class cls) {
+    public Logger (Class<?> cls) {
         this (cls.getName());
     }
 

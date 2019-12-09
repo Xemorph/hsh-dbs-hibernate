@@ -19,6 +19,11 @@ public class Store {
     private final int MAX_ENTRIES = 100;
     // Cache mechanic & cache holder / store
     private Map<Object, Object> cache = new LinkedHashMap<Object, Object>(MAX_ENTRIES+1, .75f, true) {
+        /**
+         * Auto-Generated serialVersionUID by VSCode - Java Extension
+         */
+        private static final long serialVersionUID = 6092388127250349259L;
+
         // This method is called just after a new entry has been added
         // `removeEldestEntry` checks if the eldets entry should be deleted, measured in size
         public boolean removeEldestEntry(Map.Entry<Object, Object> eldest) {

@@ -1,7 +1,5 @@
 package org.nystroem.dbs.hibernate.frontend.gui.components;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
@@ -9,13 +7,13 @@ import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
-import javax.swing.LayoutStyle;
-import javax.swing.text.Document;
 import javax.swing.text.DocumentFilter;
 import javax.swing.text.PlainDocument;
 
 public class JRadioButtonPanel extends JPanel {
-
+    // Auto-Generated `serialVersionUID` by VSCode - Java Extension
+    private static final long serialVersionUID = 980782908476128390L;
+    
     private JRadioButton rdBtnChoice;
     private JTextField txtInput;
 
