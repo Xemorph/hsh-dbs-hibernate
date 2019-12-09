@@ -15,7 +15,6 @@ public class MovieManager {
      * @throws Exception
      */
     public List<MovieDTO> getMovieList(String search) throws Exception {
-        // TODO
         return new MovieFactory().getMovies(search);
     }
 
@@ -39,11 +38,10 @@ public class MovieManager {
      * @throws Exception
      */
     public void deleteMovie(long movieId) throws Exception {
-        // TODO Auto-generated method stub
+        new MovieFactory().deleteMovie(movieId);
     }
 
     public MovieDTO getMovie(long movieId) throws Exception {
-        // TODO Auto-generated method stub
         return new MovieFactory().getMovie(movieId);
     }
 

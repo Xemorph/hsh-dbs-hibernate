@@ -65,7 +65,7 @@ public class Movie {
     @Column(name=col_year, nullable=false)
     private Integer Year;
 
-    @OneToMany(mappedBy="movie")
+    @OneToMany(mappedBy="movie", orphanRemoval=true)
     private Set<MovieCharacter> movieCharacters = new HashSet<MovieCharacter>();
 
     @ManyToMany(cascade = { 
