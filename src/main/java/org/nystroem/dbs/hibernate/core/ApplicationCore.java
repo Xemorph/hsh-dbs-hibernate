@@ -127,14 +127,19 @@ public class ApplicationCore {
             LOGGER.error("Invalid configuration, please check your configuration!");
             System.exit(1);
         }
+        // Properties instance
+        Properties props = new Properties();
         // Let's read `persistence.xml` in META-INF and change the default values
         try {
-            Configuration cfg = new Configuration();
-            cfg.addInputStream(this.getClass().getClassLoader().getResourceAsStream("META-INF/persistence.xml"));
+            //Configuration cfg = new Configuration();
+            //cfg.addInputStream(this.getClass().getClassLoader().getResourceAsStream("META-INF/persistence.xml"));
             // Set Properties
-            cfg.setProperty("hibernate.connection.url", url);
-            cfg.setProperty("hibernate.connection.username", username);
-            cfg.setProperty("hibernate.connection.password", password);
+            //cfg.setProperty("hibernate.connection.url", url);
+            //cfg.setProperty("hibernate.connection.username", username);
+            //cfg.setProperty("hibernate.connection.password", password);
+            props.put("hibernate.connection.url", url);
+            props.put("hibernate.connection.username", username);
+            props.put("hibernate.connection.password", password);
         } catch (Exception e) {
             LOGGER.fatal("Unable to read & change properties for Hibernate!", e);
             System.exit(1);
@@ -142,7 +147,6 @@ public class ApplicationCore {
         
         // Hibernate stuff
         this.cwd = new File(".checkfis").getAbsolutePath();
-        Properties props = new Properties();
         props.put("hibernate.search.default.indexBase", this.cwd.replaceAll("\\.checkfis", ""));
         store().handleCachedObject(Mutator.ENTITYMANAGERFACTORY, Persistence.createEntityManagerFactory("org.nystroem.dbserv", props));
         // Method chaining

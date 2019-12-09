@@ -45,3 +45,4 @@ buildNumber.properties
 
 # Project internal files
 config/
+org.*/
