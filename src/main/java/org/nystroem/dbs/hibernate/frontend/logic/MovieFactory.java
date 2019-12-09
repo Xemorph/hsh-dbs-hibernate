@@ -272,32 +272,28 @@ public class MovieFactory {
         } else {
             // Get `MovieCharacter` object and add it to the `dto_snapshot`
             // Add `MovieCharacter` objects
-            // dto.getCharacters().stream().forEach(cdto -> new Function<CharacterDTO,Void>() {
-            //     @Override public Void apply(CharacterDTO cdto) {
-            //         MovieCharacter movChar = new MovieCharacter();
-            //         // Add values of `CharacterDTO` to `dto_snapshot`
-            //         movChar.setCharacter(cdto.getCharacter());
-            //         movChar.setAlias(cdto.getAlias());
-            //         // Check if `Player` exists in the database
-            //         TypedQuery<Person> q = em.createQuery("SELECT p FROM " + Person.table + " p " +
-            //                                                 "WHERE upper(p." + Person.col_name + ") = :name", Person.class);
-            //                         q.setParameter("name", cdto.getPlayer().toUpperCase());
-            //         Person person = null;
-            //         try {
-            //             person = q.getSingleResult();
-            //         } catch (Exception exc) { /** No PMD */}
-            //         if (person == null) {
-            //             person = new Person();
-            //             person.setName(cdto.getPlayer());
-            //             // Persist the new created `Person` object
-            //             em.persist(person);
-            //         }
-            //         movChar.setPerson(person);
-            //         dto_snapshot.addMovieCharacter(movChar);
-            //         // Return `Void`, it says `null` but it is a `void` type
-            //         return null;
-            //     }
-            // }.apply(cdto));
+            dto.getCharacters().stream().forEach(cdto -> {
+                    MovieCharacter movChar = new MovieCharacter();
+                    // Add values of `CharacterDTO` to `dto_snapshot`
+                    movChar.setCharacter(cdto.getCharacter());
+                    movChar.setAlias(cdto.getAlias());
+                    // Check if `Player` exists in the database
+                    TypedQuery<Person> q = em.createQuery("SELECT p FROM " + Person.table + " p " +
+                                                            "WHERE upper(p." + Person.col_name + ") = :name", Person.class);
+                                    q.setParameter("name", cdto.getPlayer().toUpperCase());
+                    Person person = null;
+                    try {
+                        person = q.getSingleResult();
+                    } catch (Exception exc) { /** No PMD */}
+                    if (person == null) {
+                        person = new Person();
+                        person.setName(cdto.getPlayer());
+                        // Persist the new created `Person` object
+                        em.persist(person);
+                    }
+                    movChar.setPerson(person);
+                    movChar.setMovie(dto_snapshot);
+                });
             LOGGER.info("Persisting Movie...");
             // Result => Persist
             em.persist(dto_snapshot);
