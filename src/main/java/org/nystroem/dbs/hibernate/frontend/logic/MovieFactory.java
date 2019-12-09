@@ -1,10 +1,12 @@
 package org.nystroem.dbs.hibernate.frontend.logic;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -13,11 +15,15 @@ import javax.persistence.Query;
 
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
 import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.FullTextQuery;
 import org.hibernate.search.jpa.Search;
 import org.hibernate.search.query.dsl.QueryBuilder;
 import org.nystroem.dbs.hibernate.SharedModules;
+import org.nystroem.dbs.hibernate.core.Logger;
+import org.nystroem.dbs.hibernate.core.Utils;
 import org.nystroem.dbs.hibernate.entities.Genre;
 import org.nystroem.dbs.hibernate.entities.Movie;
 import org.nystroem.dbs.hibernate.entities.MovieCharacter;
@@ -29,6 +35,8 @@ import org.nystroem.dbs.hibernate.frontend.logic.dto.MovieDTO;
 import org.nystroem.dbs.hibernate.store.Mutator;
 
 public class MovieFactory {
+
+    private static Logger LOGGER = new Logger(MovieFactory.class);
 
     public List<MovieDTO> getMovies(String search) {
         //Local temporary `javax.persistence.EntityManager`
@@ -124,30 +132,187 @@ public class MovieFactory {
     }
 
     public void insertUpdateMovie(MovieDTO dto) {
-        Movie mov = new Movie();
-        if (dto.getTicketsSold() != null)
-            mov = new CinemaMovie();
-        if (dto.getNumOfEpisodes() != null)
-            mov = new Series();
-        mov.setTitle(dto.getTitle());
-        mov.setType(dto.getType());
-        mov.setYear(dto.getYear());
-
-        if (mov instanceof CinemaMovie) {
-            System.out.println("[Debug] Tickets: " + dto.getTicketsSold());
-            ((CinemaMovie)mov).setTicketsSold(dto.getTicketsSold());
-        }
-        if (mov instanceof Series) {
-            System.out.println("[Debug] Episodes: " + dto.getNumOfEpisodes());
-            ((Series)mov).setNumOfEpisodes(dto.getNumOfEpisodes());
-        }
-
         //Local temporary `javax.persistence.EntityManager`
         EntityManager tmpEM = ((EntityManagerFactory)SharedModules.core().store().handleCachedObject(Mutator.ENTITYMANAGERFACTORY, null)).createEntityManager();
         // [BEGIN] #Transaction
         //vergessen rauszunehmen
         tmpEM.getTransaction().begin();
-        
+        // `Movie` template - gets filled if Movie exists in database
+        Movie movie = new Movie();
+        // Fetch `Movie` entity object if it exists
+        if (dto.getId() != null)
+            movie = tmpEM.find(Movie.class, Long.valueOf(dto.getId()));
+        if (dto.getId() != null && (dto.getId() != movie.getMovieID())) {
+            LOGGER.error(String.format("Movie {%s} should exists but we couldn't find this one in the database", String.valueOf(dto.getId())));
+            LOGGER.error("Closing transaction and do a rollback!");
+            // [END]
+            tmpEM.getTransaction().rollback();
+            //Close local temporary `javax.persistence.EntityManager`
+            tmpEM.close();
+            return;
+        }
+// ########################################################################################
+// #--------------------------------------- UPDATE ---------------------------------------#
+// ########################################################################################
+        if (movie.getMovieID() > 0) {
+            if (!movie.getTitle().equals(dto.getTitle()))
+                movie.setTitle(dto.getTitle());
+            if (movie.getYear() != dto.getYear())
+                movie.setYear(dto.getYear());
+            if (!movie.getType().equalsIgnoreCase(dto.getType()))
+                movie.setType(dto.getType());
+            // Check for Series & CinemaMovie
+            if (movie instanceof CinemaMovie)
+                if (((CinemaMovie)movie).getTicketsSold() != dto.getTicketsSold())
+                    ((CinemaMovie)movie).setTicketsSold(dto.getTicketsSold());
+            if (movie instanceof Series)
+                if (((Series)movie).getNumOfEpisodes() != dto.getNumOfEpisodes())
+                    ((Series)movie).setNumOfEpisodes(dto.getNumOfEpisodes());
+            // Genres - We need to mark as dirty if there are any changes
+            //          because Hibernate can't track List, Set or Array
+            List<String> movGenre = movie.getGenres().stream().map(n -> n.getGenre()).collect(Collectors.toList());
+            if (!Utils.listEqualsIgnoreOrder(movGenre, dto.getGenres().stream().collect(Collectors.toList()))) {
+                // Lists aren't equals, know we need to figure out which elements need
+                // to be removed or added
+                final Set<Long> genres_of_dto = new HashSet<>();
+                dto.getGenres()
+                    .stream()
+                    .forEach(g -> genres_of_dto.add(
+                        (Long)tmpEM.createQuery("SELECT g." + Genre.col_genreID + " FROM " + Genre.table + " g " + 
+                            "WHERE upper(g." + Genre.col_genre + ") = :name").setParameter("name", g.toUpperCase()).getSingleResult()
+                    ));
+                final Set<Long> genres_of_obj = new HashSet<>();
+                movie.getGenres()
+                    .stream()
+                    .forEach(g -> genres_of_obj.add(
+                        (Long)tmpEM.createQuery("SELECT g." + Genre.col_genreID + " FROM " + Genre.table + " g " + 
+                            "WHERE upper(g." + Genre.col_genre + ") = :name").setParameter("name", g.getGenre().toUpperCase()).getSingleResult()
+                    ));
+                /* Calculate difference between Set1 & Set2 */
+                Set<Long> add = new HashSet<>(genres_of_dto);
+                add.removeAll(genres_of_obj);
+                LOGGER.info("Genres to add : " + add);
+                Set<Long> remove = new HashSet<>(genres_of_obj);
+                remove.removeAll(genres_of_dto);
+                LOGGER.info("Genres to remove : " + remove);
+                // Add changes to our entity
+                for (long id : remove) {
+                    movie.removeGenre(tmpEM.find(Genre.class, Long.valueOf(id)));
+                }
+                for (long id : add) {
+                    movie.addGenre(tmpEM.find(Genre.class, Long.valueOf(id)));
+                }
+            }
+            // To update the MovieCharacters we are using a similar mechanism as we did at `Genre`
+            // DELETE or INSERT MovieCharacter - No update functionality
+
+            // Contains all MovieCharacters which needs to be added
+            final Set<CharacterDTO> add =
+                dto.getCharacters().stream().filter(x -> x.getCharId() <= 0).collect(Collectors.toSet());
+            // Snapshot of `CharacterDTO` from MovieDTO object
+            final Set<Long> dto_snapshot =
+                dto.getCharacters().stream().map(z -> z.getCharId()).filter(x -> x > 0).collect(Collectors.toSet());
+            // Snapshot of `MovieCharacter` from Movie object
+            final Set<Long> obj_snapshot =
+                movie.getMovieCharacters().stream().map(z -> z.getMovCharID()).collect(Collectors.toSet());
+            
+            // Add & remove MovieCharacters
+            /* Calculate difference between Set1 & Set2 */
+            Set<Long> remove = new HashSet<>(obj_snapshot);
+            remove.removeAll(dto_snapshot);
+            LOGGER.info("MovieCharacters to remove : " + remove);
+            // Add changes to our entity
+            for (long id : remove) {
+                deleteById(MovieCharacter.class, Long.valueOf(id), tmpEM);
+            }
+            // Add changes to our entity
+            Set<MovieCharacter> movChars = new HashSet<>();
+            add.stream().forEach(t -> new Function<CharacterDTO,Void>() {
+                @Override public Void apply(CharacterDTO t) {
+                    MovieCharacter movChar = new MovieCharacter();
+                    Person person = new Person();
+                    movChar.setCharacter(t.getCharacter());
+                    movChar.setAlias(t.getAlias());
+                    try {
+                        person = (Person) tmpEM.createQuery("SELECT p FROM " + Person.table + " p " +
+                                                                    "WHERE upper(p." + Person.col_name + ") = :name")
+                                                .setParameter("name", t.getPlayer().toUpperCase())
+                                                .getSingleResult();
+                        movChar.setPerson(person);
+                    } catch (NoResultException ex) {
+                        person.setName(t.getPlayer());
+                        tmpEM.persist(person);
+                        movChar.setPerson(person);
+                    }
+                    movChars.add(movChar);
+                    return null;
+                }
+            }.apply(t));
+            for (MovieCharacter movChar : movChars) {
+                movChar.setMovie(movie);
+                tmpEM.persist(movChar);
+            }
+            // Update MovieCharacters
+            Set<Long> possible_update = new HashSet<>(dto_snapshot);
+            possible_update.removeAll(remove);
+            Set<MovieCharacter> update = new HashSet<>();
+            possible_update.stream().forEach(id -> {
+                MovieCharacter movChar = tmpEM.find(MovieCharacter.class, Long.valueOf(id));
+                CharacterDTO cdto =
+                    dto.getCharacters().stream().filter(x -> x.getCharId() == id).collect(Collectors.toList()).get(0);
+                if (!movChar.getCharacter().equals(cdto.getCharacter()))
+                    movChar.setCharacter(cdto.getCharacter());
+                if (!movChar.getAlias().equals(cdto.getAlias()))
+                    movChar.setAlias(cdto.getAlias());
+                if (!movChar.getPerson().getName().equalsIgnoreCase(cdto.getPlayer())) {
+                    Person person = new Person();
+                    try {
+                        person = (Person) tmpEM.createQuery("SELECT p FROM " + Person.table + " p " +
+                                                                    "WHERE upper(p." + Person.col_name + ") = :name")
+                                                .setParameter("name", cdto.getPlayer().toUpperCase())
+                                                .getSingleResult();
+                        movChar.setPerson(person);
+                    } catch (NoResultException ex) {
+                        person.setName(cdto.getPlayer());
+                        tmpEM.persist(person);
+                        movChar.setPerson(person);
+                    }
+                }
+                update.add(movChar);
+            });
+
+            for (MovieCharacter movChar : update) {
+                movChar.setMovie(movie);
+                tmpEM.persist(movChar);
+            }
+
+            // [END]
+            tmpEM.getTransaction().commit();
+            //Close local temporary `javax.persistence.EntityManager`
+            tmpEM.close();
+            return; // Update completed
+        }
+
+// ########################################################################################
+// #--------------------------------------- INSERT ---------------------------------------#
+// ########################################################################################
+        if (dto.getTicketsSold() != null)
+            movie = new CinemaMovie();
+        if (dto.getNumOfEpisodes() != null)
+            movie = new Series();
+        movie.setTitle(dto.getTitle());
+        movie.setType(dto.getType());
+        movie.setYear(dto.getYear());
+
+        if (movie instanceof CinemaMovie) {
+            LOGGER.debug("Tickets: " + dto.getTicketsSold());
+            ((CinemaMovie)movie).setTicketsSold(dto.getTicketsSold());
+        }
+        if (movie instanceof Series) {
+            LOGGER.debug("Episodes: " + dto.getNumOfEpisodes());
+            ((Series)movie).setNumOfEpisodes(dto.getNumOfEpisodes());
+        }
+
         final Set<Genre> genres = new HashSet<>();
         dto.getGenres()
             .stream()
@@ -157,7 +322,7 @@ public class MovieFactory {
             ));
 
         // Persist our Movie entity `mov`
-        tmpEM.persist(mov);
+        tmpEM.persist(movie);
 
         final Set<MovieCharacter> movChars = new HashSet<>();
         dto.getCharacters()
@@ -166,7 +331,6 @@ public class MovieFactory {
                     @Override public Void apply(CharacterDTO t) {
                         MovieCharacter movChar = new MovieCharacter();
                         Person person = new Person();
-
                         try {
                             movChar = (MovieCharacter) tmpEM.createQuery("SELECT c FROM " + MovieCharacter.table + " c " +
                                                                             "WHERE c." + MovieCharacter.col_movCharID + " = :id")
@@ -195,16 +359,37 @@ public class MovieFactory {
 
         // Persist MovieCharacter
         for (MovieCharacter movChar : movChars) {
-            movChar.setMovie(mov);
+            movChar.setMovie(movie);
             tmpEM.persist(movChar);
         }
+
         // [END]
         tmpEM.getTransaction().commit();
         //Close local temporary `javax.persistence.EntityManager`
         tmpEM.close();
-    
-    
-    
-    
+    }
+
+    public void deleteMovie(long movieId) {
+        //Local temporary `javax.persistence.EntityManager`
+        EntityManager tmpEM = ((EntityManagerFactory)SharedModules.core().store().handleCachedObject(Mutator.ENTITYMANAGERFACTORY, null)).createEntityManager();
+        // [BEGIN] #Transaction
+        //vergessen rauszunehmen
+        tmpEM.getTransaction().begin();
+        
+        boolean deleted = deleteById(Movie.class, Long.valueOf(movieId), tmpEM);
+
+        // [END]
+        tmpEM.getTransaction().commit();
+        //Close local temporary `javax.persistence.EntityManager`
+        tmpEM.close();
+    }
+
+    private boolean deleteById(Class<?> type, Serializable id, EntityManager em) {
+        Object persistentInstance = em.find(type, id);
+        if (persistentInstance != null) {
+            em.remove(persistentInstance);
+            return true;
+        }
+        return false;
     }
 }

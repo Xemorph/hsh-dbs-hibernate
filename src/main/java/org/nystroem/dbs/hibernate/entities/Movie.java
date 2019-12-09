@@ -26,13 +26,13 @@ import org.apache.lucene.analysis.snowball.SnowballPorterFilterFactory;
 import org.apache.lucene.analysis.standard.StandardTokenizerFactory;
 import org.hibernate.search.annotations.Analyzer;
 import org.hibernate.search.annotations.AnalyzerDef;
-import org.hibernate.search.annotations.DocumentId;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Index;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Parameter;
 import org.hibernate.search.annotations.SortableField;
 import org.hibernate.search.annotations.Store;
+import org.nystroem.dbs.hibernate.frontend.logic.dto.MovieDTO;
 
 @Entity
 @Table(name="Movie")
@@ -41,7 +41,9 @@ import org.hibernate.search.annotations.Store;
     @org.hibernate.search.annotations.TokenFilterDef(factory=LowerCaseFilterFactory.class),
     @org.hibernate.search.annotations.TokenFilterDef(factory=SnowballPorterFilterFactory.class, params = { @Parameter(name="language", value="English") }) })
 @Indexed
-public class Movie {
+public class Movie
+    implements Cloneable 
+{
     /** Konstanten */
     public static final String seq_movieID = "movie_id";
     public static final String table = "Movie";
@@ -65,7 +67,7 @@ public class Movie {
     @Column(name=col_year, nullable=false)
     private Integer Year;
 
-    @OneToMany(mappedBy="movie")
+    @OneToMany(mappedBy="movie", orphanRemoval=true)
     private Set<MovieCharacter> movieCharacters = new HashSet<MovieCharacter>();
 
     @ManyToMany(cascade = { 
@@ -118,7 +120,17 @@ public class Movie {
         this.genres.add(genre);
     }
 
+    public void removeGenre(Genre genre) {
+        this.genres.remove(genre);
+    }
+
     public Set<MovieCharacter> getMovieCharacters() {
         return this.movieCharacters;
+    }
+
+// ------------------------- Java used methods -----------------------------
+
+    public Object clone() throws CloneNotSupportedException {
+        return super.clone();
     }
 }
