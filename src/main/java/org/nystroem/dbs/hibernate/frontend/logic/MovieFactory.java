@@ -1,6 +1,7 @@
 package org.nystroem.dbs.hibernate.frontend.logic;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -11,6 +12,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
+import javax.persistence.TypedQuery;
 
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
@@ -39,7 +41,7 @@ public class MovieFactory {
         //Local temporary `javax.persistence.EntityManager`
         EntityManager em = ((EntityManagerFactory)SharedModules.core().store().handleCachedObject(Mutator.ENTITYMANAGERFACTORY, null)).createEntityManager();
         // Result list
-        final List<MovieDTO> rs = new CopyOnWriteArrayList<>();
+        List<MovieDTO> rs = new ArrayList<>();
         //Local temporary `FullTextEntityManager`
         FullTextEntityManager ftem = Search.getFullTextEntityManager(em);
         // Decision -> Search
@@ -61,8 +63,8 @@ public class MovieFactory {
         FullTextQuery persistenceQuery = ftem.createFullTextQuery(query, Movie.class);
         persistenceQuery.setSort(sort);
         // Execute search
-        MovieDTO dto = new MovieDTO();
-        persistenceQuery.getResultList().stream().forEach(movie -> { 
+        persistenceQuery.getResultStream().forEach(movie -> {
+            MovieDTO dto = new MovieDTO();
             dto.setId(((Movie)movie).getMovieID());
             dto.setTitle(((Movie)movie).getTitle());
             dto.setType(((Movie)movie).getType().toString());
@@ -110,10 +112,10 @@ public class MovieFactory {
         
         movie.getGenres().stream().map(n -> n.getGenre()).forEach(g -> dto.addGenre(g));
         // Map Set<MovieCharacter> to Set<CharacterDTO>
-        final CharacterDTO cdto = new CharacterDTO();
         movie.getMovieCharacters()
             .stream()
             .forEach(mChar -> {
+                CharacterDTO cdto = new CharacterDTO();
                 cdto.setCharId(mChar.getMovCharID());
                 cdto.setCharacter(mChar.getCharacter());
                 cdto.setAlias(mChar.getAlias());
@@ -131,84 +133,110 @@ public class MovieFactory {
     }
 
     public void insertUpdateMovie(MovieDTO dto) {
-        Movie mov = new Movie();
-        if (dto.getTicketsSold() != null)
-            mov = new CinemaMovie();
-        if (dto.getNumOfEpisodes() != null)
-            mov = new Series();
-        mov.setTitle(dto.getTitle());
-        mov.setType(dto.getType());
-        mov.setYear(dto.getYear());
-
-        if (mov instanceof CinemaMovie) {
-            LOGGER.debug("Tickets: " + dto.getTicketsSold());
-            ((CinemaMovie)mov).setTicketsSold(dto.getTicketsSold());
-        }
-        if (mov instanceof Series) {
-            LOGGER.debug("Episodes: " + dto.getNumOfEpisodes());
-            ((Series)mov).setNumOfEpisodes(dto.getNumOfEpisodes());
-        }
-
         //Local temporary `javax.persistence.EntityManager`
-        EntityManager tmpEM = ((EntityManagerFactory)SharedModules.core().store().handleCachedObject(Mutator.ENTITYMANAGERFACTORY, null)).createEntityManager();
+        EntityManager em = ((EntityManagerFactory)SharedModules.core().store().handleCachedObject(Mutator.ENTITYMANAGERFACTORY, null)).createEntityManager();
         // [BEGIN] #Transaction
-        //vergessen rauszunehmen
-        tmpEM.getTransaction().begin();
-        
-        final Set<Genre> genres = new HashSet<>();
-        dto.getGenres()
-            .stream()
-            .forEach(g -> genres.add(
-                (Genre)tmpEM.createQuery("SELECT g FROM " + Genre.table + " g " + 
-                    "WHERE upper(g." + Genre.col_genre + ") = :name").setParameter("name", g.toUpperCase()).getSingleResult()
-            ));
+        em.getTransaction().begin();
+
+        // Generate temporary `Movie` object from the given `MovieDTO` object
+        final Movie dto_snapshot;
+        if (dto.getTicketsSold() != null)
+            dto_snapshot = new CinemaMovie();
+        else if (dto.getNumOfEpisodes() != null)
+            dto_snapshot = new Series();
+        else
+            dto_snapshot = new Movie();
+        // Set default variables
+        dto_snapshot.setTitle(dto.getTitle());
+        dto_snapshot.setType(dto.getType());
+        dto_snapshot.setYear(dto.getYear());
+        // Set inheritanced variables if only needed
+        if (dto_snapshot instanceof CinemaMovie)
+            ((CinemaMovie)dto_snapshot).setTicketsSold(dto.getTicketsSold());
+        if (dto_snapshot instanceof Series)
+            ((Series)dto_snapshot).setNumOfEpisodes(dto.getNumOfEpisodes());
+        // Get `Genre` object and add it to the `dto_snapshot` via `Movie.addGenre(Genre genre)`
+        dto.getGenres().stream().forEach(n -> new Function<String,Void>() {
+            // Internal method, which gets executed like this `n -> apply(n)` and returns `void` type
+            @Override public Void apply(String t) {
+                TypedQuery<Genre> q = em.createQuery("SELECT g FROM " + Genre.table + " g " + 
+                                                        "WHERE upper(g." + Genre.col_genre + ") = :name", Genre.class);
+                                  q.setParameter("name", t.toUpperCase());
+                dto_snapshot.addGenre(q.getSingleResult());
+                // Return `Void`, it says `null` but it is a `void` type
+                return null;
+            }
+        }.apply(n));
+
+        // Check for Merge / persist
+        if (dto.getId() != null || dto.getId() > 0) {
+            // Result => Merge
+            Movie db_snapshot = em.find(Movie.class, Long.valueOf(dto.getId()));
+            if (db_snapshot != null)
+                dto_snapshot.setMovieID(db_snapshot.getMovieID());
+            else {
+                // The required Movie couldn't be found, do a rollback and get out of this method!
+                // [END]
+                em.getTransaction().rollback();
+                //Close local temporary `javax.persistence.EntityManager`
+                em.close();
+                // Return, don't execute anything here anymore!
+                return;
+            }
+            // Merge `db_snapshot` with `dto_snapshot` to get the updated `Movie` object
+            Movie movie = (Movie) em.merge(dto_snapshot);
+        } else {
+            // Result => Persist
+            em.persist(dto_snapshot);
+        }
 
         // Persist our Movie entity `mov`
-        tmpEM.persist(mov);
+        // em.persist(mov);
 
-        final Set<MovieCharacter> movChars = new HashSet<>();
-        dto.getCharacters()
-            .stream()
-            .forEach(c -> new Function<CharacterDTO,Void>() {
-                    @Override public Void apply(CharacterDTO t) {
-                        MovieCharacter movChar = new MovieCharacter();
-                        Person person = new Person();
+        // final Set<MovieCharacter> movChars = new HashSet<>();
+        // dto.getCharacters()
+        //     .stream()
+        //     .forEach(c -> new Function<CharacterDTO,Void>() {
+        //             @Override public Void apply(CharacterDTO t) {
+        //                 MovieCharacter movChar = new MovieCharacter();
+        //                 Person person = new Person();
 
-                        try {
-                            movChar = (MovieCharacter) tmpEM.createQuery("SELECT c FROM " + MovieCharacter.table + " c " +
-                                                                            "WHERE c." + MovieCharacter.col_movCharID + " = :id")
-                                                            .setParameter("id", t.getCharId())
-                                                            .getSingleResult();
-                        } catch (NoResultException exc) {
-                            movChar.setAlias(t.getAlias());
-                            movChar.setCharacter(t.getCharacter());
-                            try {
-                                person = (Person) tmpEM.createQuery("SELECT p FROM " + Person.table + " p " +
-                                                                            "WHERE upper(p." + Person.col_name + ") = :name")
-                                                        .setParameter("name", t.getPlayer().toUpperCase())
-                                                        .getSingleResult();
+        //                 try {
+        //                     movChar = (MovieCharacter) em.createQuery("SELECT c FROM " + MovieCharacter.table + " c " +
+        //                                                                     "WHERE c." + MovieCharacter.col_movCharID + " = :id")
+        //                                                     .setParameter("id", t.getCharId())
+        //                                                     .getSingleResult();
+        //                 } catch (NoResultException exc) {
+        //                     movChar.setAlias(t.getAlias());
+        //                     movChar.setCharacter(t.getCharacter());
+        //                     try {
+        //                         person = (Person) em.createQuery("SELECT p FROM " + Person.table + " p " +
+        //                                                                     "WHERE upper(p." + Person.col_name + ") = :name")
+        //                                                 .setParameter("name", t.getPlayer().toUpperCase())
+        //                                                 .getSingleResult();
                                 
-                                movChar.setPerson(person);
-                            } catch (NoResultException ex) {
-                                person.setName(t.getPlayer());
-                                tmpEM.persist(person);
-                                movChar.setPerson(person);
-                            }
-                        }
-                        movChars.add(movChar);
-                        return null;
-                    }
-            }.apply(c));
+        //                         movChar.setPerson(person);
+        //                     } catch (NoResultException ex) {
+        //                         person.setName(t.getPlayer());
+        //                         em.persist(person);
+        //                         movChar.setPerson(person);
+        //                     }
+        //                 }
+        //                 movChars.add(movChar);
+        //                 return null;
+        //             }
+        //     }.apply(c));
 
-        // Persist MovieCharacter
-        for (MovieCharacter movChar : movChars) {
-            movChar.setMovie(mov);
-            tmpEM.persist(movChar);
-        }
+        // // Persist MovieCharacter
+        // for (MovieCharacter movChar : movChars) {
+        //     movChar.setMovie(mov);
+        //     em.persist(movChar);
+        // }
+
         // [END]
-        tmpEM.getTransaction().commit();
+        em.getTransaction().commit();
         //Close local temporary `javax.persistence.EntityManager`
-        tmpEM.close();
+        em.close();
     }
 
     public void deleteMovie(long movieId) {
@@ -218,13 +246,15 @@ public class MovieFactory {
         em.getTransaction().begin();
         // Delete `Movie` by the given ID
         boolean deleted = deleteById(Movie.class, Long.valueOf(movieId), em);
+        Exception exc = new Exception("");
         if (deleted)
-            new ShowErrorDialog(String.format("Movie {%s} deleted!", String.valueOf(movieId)), null);
+            new ShowErrorDialog(String.format("Movie {%s} deleted!", String.valueOf(movieId)), exc);
         else 
-            new ShowErrorDialog(String.format("Error occured while deleting Movie {%s}! Please, check the console for more information.", String.valueOf(movieId)), null);
+            new ShowErrorDialog(String.format("Error occured while deleting Movie {%s}! Please, check the console for more information.", String.valueOf(movieId)), exc);
         // [END]
         em.getTransaction().commit();
         // Close local temporary `javax.persistence.EntityManager`
+        em.close();
     }
 
     /*----------------------------------------------------------------------*\

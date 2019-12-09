@@ -86,6 +86,10 @@ public class Movie {
         return this.MovieID;
     }
 
+    public void setMovieID(Long MovieID) {
+        this.MovieID = MovieID;
+    }
+
     public String getTitle() {
         return this.Title;
     }
