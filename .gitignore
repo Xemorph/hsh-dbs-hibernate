@@ -1,5 +1,3 @@
-src/main/resources/META-INF/persistence.xml
-
 # Compiled class file
 *.class
 
@@ -44,3 +42,6 @@ buildNumber.properties
 !.vscode/launch.json
 !.vscode/extensions.json
 *.code-workspace
+
+# Project internal files
+config/

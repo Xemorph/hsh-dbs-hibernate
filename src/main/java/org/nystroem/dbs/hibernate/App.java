@@ -4,6 +4,7 @@ import javax.management.InstanceAlreadyExistsException;
 
 import javax.persistence.EntityManagerFactory;
 
+import org.nystroem.dbs.hibernate.core.Logger;
 import org.nystroem.dbs.hibernate.store.Mutator;
 
 /**
@@ -13,6 +14,8 @@ import org.nystroem.dbs.hibernate.store.Mutator;
 public class App {
     public static void main(String[] args) {
         try {
+            // Enable logging mechanism
+            Logger.enableLogging();
             // Initialization
             SharedModules.initialize();
         } catch (InstanceAlreadyExistsException e) {
