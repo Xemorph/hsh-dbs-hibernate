@@ -1,6 +1,5 @@
 package org.nystroem.dbs.hibernate.entities;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;

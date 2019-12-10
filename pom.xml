@@ -95,7 +95,7 @@
                 <properties>
                   <property>
                     <name>partitionierung</name>
-                    <value>SINGLE_TABLE</value>
+                    <value>TABLE_PER_CLASS</value>
                   </property>
                 </properties>
               </processorProperty>

@@ -6,11 +6,13 @@
 package org.nystroem.dbs.hibernate.entities;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -67,7 +69,7 @@ public class Movie
     @Column(name=col_year, nullable=false)
     private Integer Year;
 
-    @OneToMany(mappedBy="movie", orphanRemoval=true)
+    @OneToMany(mappedBy="movie", orphanRemoval=true, cascade={CascadeType.PERSIST,CascadeType.MERGE}, fetch=FetchType.LAZY)
     private Set<MovieCharacter> movieCharacters = new HashSet<>();
 
     @ManyToMany(cascade={
@@ -132,6 +134,17 @@ public class Movie
         this.movieCharacters.add(movieCharacter);
         if (movieCharacter.getMovie() != this)
             movieCharacter.setMovie(this);
+    }
+
+    public void removeMovieCharacter(MovieCharacter movieCharacter) {
+        for (Iterator<MovieCharacter> iterator = this.movieCharacters.iterator(); iterator.hasNext();) {
+            MovieCharacter movChar = iterator.next();
+            if (movChar.getMovie().equals(this) && movChar.equals(movieCharacter)) {
+                iterator.remove();
+                movChar.getPerson().getMovieCharacters().remove(movieCharacter);
+                this.movieCharacters.remove(movieCharacter);
+            }
+        }
     }
 
     @Override public Object clone() {

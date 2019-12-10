@@ -176,41 +176,14 @@ public class MovieFactory {
                 // Return, don't execute anything here anymore!
                 return;
             }
-             // Get `MovieCharacter` object and add it to the `dto_snapshot`
+
             Set<CharacterDTO> movchar_dto_snapshot =
                 new HashSet<>(dto.getCharacters().stream().filter(x -> x.getCharId() == -999L).collect(Collectors.toSet()));
+            // Get `MovieCharacter` object and add it to the `dto_snapshot`
             // Add `MovieCharacter` objects
             movchar_dto_snapshot.stream().forEach(cdto -> {
                 MovieCharacter movChar = new MovieCharacter();
                 // Add values of `CharacterDTO` to `dto_snapshot`
-                movChar.setCharacter(cdto.getCharacter());
-                movChar.setAlias(cdto.getAlias());
-                // Check if `Player` exists in the database
-                TypedQuery<Person> q = em.createQuery("SELECT p FROM " + Person.table + " p " +
-                                                        "WHERE upper(p." + Person.col_name + ") = :name", Person.class);
-                                q.setParameter("name", cdto.getPlayer().toUpperCase());
-                Person person = null;
-                try {
-                    person = q.getSingleResult();
-                } catch (Exception exc) { /** No PMD */}
-                if (person == null) {
-                    person = new Person();
-                    person.setName(cdto.getPlayer());
-                    // Persist the new created `Person` object
-                    em.persist(person);
-                }
-                movChar.setPerson(person);
-                // Add `MovieCharacter` to `dto_snapshot`
-                dto_snapshot.addMovieCharacter(movChar);
-            });
-            //
-            movchar_dto_snapshot =
-                new HashSet<>(dto.getCharacters().stream().filter(x -> x.getCharId() != -999L).collect(Collectors.toSet()));
-            // Add `MovieCharacter` objects
-            movchar_dto_snapshot.stream().forEach(cdto -> {
-                MovieCharacter movChar = new MovieCharacter();
-                // Add values of `CharacterDTO` to `dto_snapshot`
-                movChar.setMovCharID(cdto.getCharId());
                 movChar.setCharacter(cdto.getCharacter());
                 movChar.setAlias(cdto.getAlias());
                 // Check if `Player` exists in the database
@@ -234,6 +207,90 @@ public class MovieFactory {
 
             // Merge `db_snapshot` with `dto_snapshot` to get the updated `Movie` object
             Movie movie = (Movie) em.merge(dto_snapshot);
+
+            // Get `MovieCharacter` object and add it to the `dto_snapshot`
+            // Set<CharacterDTO> add = dto.getCharacters().stream().filter(x -> x.getCharId() == -999L).collect(Collectors.toSet());
+            // Set<CharacterDTO> update = dto.getCharacters().stream().filter(x -> x.getCharId() != -999L).collect(Collectors.toSet());
+            // // First unlink `MovieCharacters` which got deleted over the GUI
+            // StringJoiner db_joiner = new StringJoiner(",");
+            // StringJoiner dto_joiner = new StringJoiner(",");
+            // Set<Long> remove = new HashSet<>();
+            // if (movie != null)
+            //     remove = new HashSet<>(db_snapshot.getMovieCharacters().stream().map(n -> Long.valueOf(n.getMovCharID())).collect(Collectors.toSet()));
+            // else
+            //     LOGGER.debug("No changes at Movie found!");
+            // // [DEBUGGING]
+            // remove.stream().forEach(x -> { db_joiner.add(String.valueOf(x)); });
+            // update.stream().map(x -> x.getCharId()).forEach(x -> { dto_joiner.add(String.valueOf(x)); });
+            // LOGGER.info("DB - Remove: " + db_joiner.toString());
+            // LOGGER.info("DTO - Remove: " + dto_joiner.toString());
+            // remove.removeAll(update.stream().map(x -> x.getCharId()).collect(Collectors.toSet()));
+            // // Remove `MovieCharacters` only if the list is not empty!
+            // if (!remove.isEmpty())
+            //     remove.stream().forEach(x -> deleteById(MovieCharacter.class, x, em));
+            // // Update `MovieCharacter` objects
+            // update.stream().forEach(cdto -> new Function<CharacterDTO,Void>() {
+            //     @Override public Void apply(CharacterDTO cdto) {
+            //         MovieCharacter db_snapshot = em.find(MovieCharacter.class, Long.valueOf(cdto.getCharId()));
+            //         MovieCharacter dto_snapshot = new MovieCharacter();
+            //         // Normally this shouldn't happens
+            //         if (db_snapshot == null) return null;
+            //         dto_snapshot.setMovCharID(db_snapshot.getMovCharID());
+            //         // Add values of `CharacterDTO` to `dto_snapshot`
+            //         // Hibernate decides himself which fields need an update
+            //         dto_snapshot.setCharacter(cdto.getCharacter());
+            //         dto_snapshot.setAlias(cdto.getAlias());
+            //         // Check if `Player` exists in the database
+            //         TypedQuery<Person> q = em.createQuery("SELECT p FROM " + Person.table + " p " +
+            //                                                 "WHERE upper(p." + Person.col_name + ") = :name", Person.class);
+            //                         q.setParameter("name", cdto.getPlayer().toUpperCase());
+            //         Person person = null;
+            //         try {
+            //             person = q.getSingleResult();
+            //         } catch (Exception exc) { /** No PMD */}
+            //         if (person == null) {
+            //             person = new Person();
+            //             person.setName(cdto.getPlayer());
+            //             // Persist the new created `Person` object
+            //             em.persist(person);
+            //         }
+            //         dto_snapshot.setPerson(person);
+            //         dto_snapshot.setMovie(movie);
+            //         // Merge `db_snapshot` with `dto_snapshot` to get the updated `MovieCharacter` object
+            //         MovieCharacter movChar = (MovieCharacter) em.merge(dto_snapshot);
+            //         // Return `Void`, it says `null` but it is a `void` type
+            //         return null;
+            //     }
+            // }.apply(cdto));
+            // // Add `MovieCharacter` objects
+            // add.stream().forEach(cdto -> new Function<CharacterDTO,Void>() {
+            //     @Override public Void apply(CharacterDTO cdto) {
+            //         MovieCharacter movChar = new MovieCharacter();
+            //         // Add values of `CharacterDTO` to `dto_snapshot`
+            //         movChar.setCharacter(cdto.getCharacter());
+            //         movChar.setAlias(cdto.getAlias());
+            //         // Check if `Player` exists in the database
+            //         TypedQuery<Person> q = em.createQuery("SELECT p FROM " + Person.table + " p " +
+            //                                                 "WHERE upper(p." + Person.col_name + ") = :name", Person.class);
+            //                         q.setParameter("name", cdto.getPlayer().toUpperCase());
+            //         Person person = null;
+            //         try {
+            //             person = q.getSingleResult();
+            //         } catch (Exception exc) { /** No PMD */}
+            //         if (person == null) {
+            //             person = new Person();
+            //             person.setName(cdto.getPlayer());
+            //             // Persist the new created `Person` object
+            //             em.persist(person);
+            //         }
+            //         movChar.setPerson(person);
+            //         movChar.setMovie(movie);
+            //         // Persist the new created `MovieCharacter` object
+            //         em.persist(movChar);
+            //         // Return `Void`, it says `null` but it is a `void` type
+            //         return null;
+            //     }
+            // }.apply(cdto));
         } else {
             // Get `MovieCharacter` object and add it to the `dto_snapshot`
             // Add `MovieCharacter` objects
@@ -268,6 +325,49 @@ public class MovieFactory {
         em.getTransaction().commit();
         //Close local temporary `javax.persistence.EntityManager`
         em.close();
+
+        // Persist our Movie entity `mov`
+        // em.persist(mov);
+
+        // final Set<MovieCharacter> movChars = new HashSet<>();
+        // dto.getCharacters()
+        //     .stream()
+        //     .forEach(c -> new Function<CharacterDTO,Void>() {
+        //             @Override public Void apply(CharacterDTO t) {
+        //                 MovieCharacter movChar = new MovieCharacter();
+        //                 Person person = new Person();
+
+        //                 try {
+        //                     movChar = (MovieCharacter) em.createQuery("SELECT c FROM " + MovieCharacter.table + " c " +
+        //                                                                     "WHERE c." + MovieCharacter.col_movCharID + " = :id")
+        //                                                     .setParameter("id", t.getCharId())
+        //                                                     .getSingleResult();
+        //                 } catch (NoResultException exc) {
+        //                     movChar.setAlias(t.getAlias());
+        //                     movChar.setCharacter(t.getCharacter());
+        //                     try {
+        //                         person = (Person) em.createQuery("SELECT p FROM " + Person.table + " p " +
+        //                                                                     "WHERE upper(p." + Person.col_name + ") = :name")
+        //                                                 .setParameter("name", t.getPlayer().toUpperCase())
+        //                                                 .getSingleResult();
+                                
+        //                         movChar.setPerson(person);
+        //                     } catch (NoResultException ex) {
+        //                         person.setName(t.getPlayer());
+        //                         em.persist(person);
+        //                         movChar.setPerson(person);
+        //                     }
+        //                 }
+        //                 movChars.add(movChar);
+        //                 return null;
+        //             }
+        //     }.apply(c));
+
+        // // Persist MovieCharacter
+        // for (MovieCharacter movChar : movChars) {
+        //     movChar.setMovie(mov);
+        //     em.persist(movChar);
+        // }
     }
 
     public void deleteMovie(long movieId) {
