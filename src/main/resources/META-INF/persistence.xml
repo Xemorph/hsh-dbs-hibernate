@@ -9,6 +9,8 @@
                 value="oracle.jdbc.driver.OracleDriver" />
             <property name="hibernate.connection.autocommit"
                 value="false" />
+            <property name="hibernate.connection.pool_size"
+                value="10" />
             <property name="hibernate.connection.url" 
                 value="" />
             <property name="hibernate.connection.username" 
