@@ -15,7 +15,7 @@
 
 ---
 ## Informationen
-Der Aufgabenteil 8.1 wurde mit dem `Program Transformation System (PTS)` realisiert. Als Bibliothek & PTS kam [Spoon]() für Java zum Einsatz. Sollten Sie Fragen zum `PTS` haben, dann wenden Sie sich per E-Mail an finn.brandes@stud.hs-hannover.de bitte.
+Der Aufgabenteil 8.1 wurde mit dem `Program Transformation System (PTS)` realisiert. Als Bibliothek & PTS kam [Spoon](http://spoon.gforge.inria.fr/) für Java zum Einsatz. Sollten Sie Fragen zum `PTS` haben, dann wenden Sie sich per E-Mail an finn.brandes@stud.hs-hannover.de bitte.
 
 ---
 ## Installation

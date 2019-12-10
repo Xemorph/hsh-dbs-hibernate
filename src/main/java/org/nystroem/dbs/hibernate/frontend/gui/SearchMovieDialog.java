@@ -1,5 +1,7 @@
 package org.nystroem.dbs.hibernate.frontend.gui;
 
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -12,14 +14,17 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.List;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 
+import org.nystroem.dbs.hibernate.frontend.gui.components.StatusBar;
 import org.nystroem.dbs.hibernate.frontend.logic.dto.MovieDTO;
 
 
@@ -102,6 +107,22 @@ public class SearchMovieDialog extends JFrame {
         btnDelete = new JButton("Delete");
         layout.setConstraints(btnDelete, gbc);
         add(btnDelete);
+
+        gbc.gridx = 0;
+        gbc.gridy = 9;
+        gbc.gridheight = 1;
+        gbc.gridwidth = 2;
+        StatusBar.getInstance().setZoneBorder(BorderFactory.createLineBorder(Color.GRAY));
+        StatusBar.getInstance().setZones(
+            new String[] { "messages", "connection" },
+            new Component[] {
+                new JLabel("..."),
+                new JLabel("...")
+            },
+            new String[] {"75%", "*"}
+        );
+        layout.setConstraints(StatusBar.getInstance(), gbc);
+        add(StatusBar.getInstance());
 
         tabResult.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {

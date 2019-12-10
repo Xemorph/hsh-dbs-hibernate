@@ -5,12 +5,12 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.TypedQuery;
+import javax.swing.JLabel;
 
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
@@ -27,6 +27,7 @@ import org.nystroem.dbs.hibernate.entities.Person;
 import org.nystroem.dbs.hibernate.entities.sub.CinemaMovie;
 import org.nystroem.dbs.hibernate.entities.sub.Series;
 import org.nystroem.dbs.hibernate.frontend.gui.ShowErrorDialog;
+import org.nystroem.dbs.hibernate.frontend.gui.components.StatusBar;
 import org.nystroem.dbs.hibernate.frontend.logic.dto.CharacterDTO;
 import org.nystroem.dbs.hibernate.frontend.logic.dto.MovieDTO;
 import org.nystroem.dbs.hibernate.store.Mutator;
@@ -234,6 +235,15 @@ public class MovieFactory {
 
             // Merge `db_snapshot` with `dto_snapshot` to get the updated `Movie` object
             Movie movie = (Movie) em.merge(dto_snapshot);
+            // Set StatusBar message
+            if (movie != null)
+                if (StatusBar.getInstance().getZone("messages") instanceof JLabel)
+                    ((JLabel)StatusBar.getInstance().getZone("messages")).setText(String.format("Movie {%s} updated!", String.valueOf(dto_snapshot.getMovieID())));
+            else
+                if (StatusBar.getInstance().getZone("messages") instanceof JLabel)
+                    ((JLabel)StatusBar.getInstance().getZone("messages")).setText(String.format("Error occured while updating Movie {%s}!", String.valueOf(dto_snapshot.getMovieID())));
+            // Reset StatusBar
+            StatusBar.getInstance().resetZone("messages");
         } else {
             // Get `MovieCharacter` object and add it to the `dto_snapshot`
             // Add `MovieCharacter` objects
@@ -260,9 +270,13 @@ public class MovieFactory {
                     // Add `MovieCharacter` to `dto_snapshot`
                     dto_snapshot.addMovieCharacter(movChar);
                 });
-            LOGGER.info("Persisting Movie...");
             // Result => Persist
             em.persist(dto_snapshot);
+            // Set StatusBar message
+            if (StatusBar.getInstance().getZone("messages") instanceof JLabel)
+                ((JLabel)StatusBar.getInstance().getZone("messages")).setText(String.format("Movie created!"));
+            // Reset StatusBar
+            StatusBar.getInstance().resetZone("messages");
         }
         // [END]
         em.getTransaction().commit();
@@ -277,11 +291,14 @@ public class MovieFactory {
         em.getTransaction().begin();
         // Delete `Movie` by the given ID
         boolean deleted = deleteById(Movie.class, Long.valueOf(movieId), em);
-        Exception exc = new Exception("");
         if (deleted)
-            new ShowErrorDialog(String.format("Movie {%s} deleted!", String.valueOf(movieId)), exc);
-        else 
-            new ShowErrorDialog(String.format("Error occured while deleting Movie {%s}! Please, check the console for more information.", String.valueOf(movieId)), exc);
+            if (StatusBar.getInstance().getZone("messages") instanceof JLabel)
+                ((JLabel)StatusBar.getInstance().getZone("messages")).setText(String.format("Movie {%s} deleted!", String.valueOf(movieId)));
+        else
+            if (StatusBar.getInstance().getZone("messages") instanceof JLabel)
+                ((JLabel)StatusBar.getInstance().getZone("messages")).setText(String.format("Error occured while deleting Movie {%s}!", String.valueOf(movieId)));
+        // StatusBar reset
+        StatusBar.getInstance().resetZone("messages");
         // [END]
         em.getTransaction().commit();
         // Close local temporary `javax.persistence.EntityManager`
